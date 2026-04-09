@@ -1,0 +1,128 @@
+.vehicle-detail-card {
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.vehicle-detail-title {
+  font-size: clamp(1.6rem, 4vw, 2.2rem);
+  font-weight: 700;
+  color: #1f2556;
+}
+
+.vehicle-detail-title span {
+  font-weight: 400;
+  color: #6c757d;
+}
+
+.vehicle-detail-image-wrapper {
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.vehicle-detail-image {
+  max-height: 420px;
+  object-fit: cover;
+}
+
+.price-box {
+  background: #f8f9fa;
+  border: 1px solid #eceef1;
+  border-radius: 12px;
+  padding: 24px;
+}
+
+.price-label {
+  font-size: 0.95rem;
+  color: #6c757d;
+}
+
+.price-value {
+  font-size: clamp(1.6rem, 4vw, 2.2rem);
+  font-weight: 700;
+  color: #1f2556;
+}
+
+.rent-value {
+  font-size: clamp(1.4rem, 3vw, 2rem);
+  font-weight: 700;
+  color: #26ad88;
+}
+
+.rent-value span {
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: #1f2556;
+}
+
+.vehicle-quick-info {
+  background: #ffffff;
+}
+
+.quick-info-item {
+  background: #f8f9fa;
+  border-radius: 10px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.quick-info-label {
+  font-size: 0.85rem;
+  color: #6c757d;
+}
+
+.quick-info-value {
+  font-weight: 700;
+  color: #1f2556;
+}
+
+.vehicle-detail-tabs {
+  border-bottom: 1px solid #dee2e6;
+  gap: 1rem;
+}
+
+.vehicle-detail-tabs .nav-link {
+  border: none;
+  background: transparent;
+  color: #1f2556;
+  font-weight: 600;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.vehicle-detail-tabs .nav-link.active {
+  color: #26ad88;
+  border-bottom: 3px solid #26ad88;
+}
+
+.vehicle-detail-content {
+  color: #495057;
+  line-height: 1.6;
+}
+
+.feature-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #1f2556;
+}
+
+.feature-item i {
+  color: #26ad88;
+}
+
+@media (max-width: 575.98px) {
+  .price-value,
+  .rent-value {
+    font-size: 1.5rem;
+  }
+
+  .vehicle-detail-image {
+    max-height: 260px;
+  }
+
+  .vehicle-detail-tabs {
+    gap: 0.6rem;
+  }
+}

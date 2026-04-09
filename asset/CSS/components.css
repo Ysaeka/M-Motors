@@ -1,0 +1,125 @@
+.btn-client {
+  background: #4b4b78;
+  color: #fff;
+  border-radius: 8px;
+  padding: 10px 24px;
+  font-weight: 500;
+  border: none;
+}
+
+.btn-client:hover {
+  background: #484868;
+  color: #fff;
+}
+
+.btn-detail {
+  background: #26ad88;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 22px;
+  font-weight: 600;
+}
+
+.btn-detail:hover {
+  background: #1f9978;
+  color: #fff;
+}
+
+.btn-back {
+  background: #ffffff;
+  color: #1f2556;
+  border: 1px solid #dcdfe5;
+  border-radius: 8px;
+  padding: 10px 18px;
+  font-weight: 600;
+}
+
+.btn-back:hover {
+  background: #f3f4f6;
+  color: #1f2556;
+}
+
+.btn-secondary-detail {
+  background: #2e5e9e;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 20px;
+  font-weight: 600;
+}
+
+.btn-secondary-detail:hover {
+  background: #274f86;
+  color: #fff;
+}
+
+.form-select {
+  height: 50px;
+  border-radius: 14px;
+  color: #1f2556;
+  border: 1px solid #cfcfd6;
+}
+
+.vehicle-badge {
+  display: inline-block;
+  background: #e8f7f2;
+  color: #1f9978;
+  font-size: 0.9rem;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 999px;
+}
+
+.vehicle-tag {
+  display: inline-block;
+  background: #f1f3f5;
+  color: #1f2556;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 0.9rem;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.status-pending {
+  background: #fff4db;
+  color: #b78103;
+}
+
+.status-missing {
+  background: #fde7e7;
+  color: #ba3b3b;
+}
+
+.status-approved {
+  background: #e8f7f2;
+  color: #1f9978;
+}
+
+@media (max-width: 991.98px) {
+  .btn-client {
+    width: 100%;
+    text-align: center;
+  }
+}
+
+@media (max-width: 575.98px) {
+  .form-select {
+    height: 46px;
+    font-size: 0.95rem;
+  }
+
+  .btn-detail,
+  .btn-back,
+  .btn-secondary-detail {
+    width: 100%;
+    text-align: center;
+  }
+}

@@ -1,0 +1,44 @@
+body {
+  background: #f2f2f4;
+  font-family: Arial, sans-serif;
+  color: #1f2556;
+}
+
+.navbar-custom {
+  background: #fff;
+  padding: 1rem 0;
+}
+
+.logo {
+  width: 120px;
+  height: auto;
+}
+
+.nav-link-custom {
+  color: #111;
+  font-size: 1.05rem;
+  margin-left: 1.2rem;
+  text-decoration: none;
+}
+
+.nav-link-custom:hover {
+  color: #111;
+}
+
+@media (max-width: 991.98px) {
+  .navbar-custom {
+    padding: 0.8rem 0;
+  }
+
+  .nav-link-custom {
+    margin-left: 0;
+    display: block;
+    width: 100%;
+  }
+}
+
+@media (max-width: 575.98px) {
+  .logo {
+    width: 100px;
+  }
+}

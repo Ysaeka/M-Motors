@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>M Motors</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"/>
+  <link rel="stylesheet" href="../asset/css/style.css" />
+</head>
+
+<body>
+
+<section class="admin-layout">
+  <aside class="admin-sidebar">
+    <div class="admin-sidebar-brand">
+      <img src="../asset/img/logo.png" alt="M Motors" class="admin-logo">
+      <span>Admin</span>
+    </div>
+
+    <nav class="admin-nav">
+      <a href="#" class="admin-nav-link"><i class="bi bi-grid"></i><span>Tableau de bord</span></a>
+      <a href="#" class="admin-nav-link active"><i class="bi bi-folder2-open"></i><span>Demandes en cours</span></a>
+      <a href="#" class="admin-nav-link"><i class="bi bi-hourglass-split"></i><span>À traiter</span></a>
+      <a href="#" class="admin-nav-link"><i class="bi bi-people"></i><span>Clients</span></a>
+      <a href="#" class="admin-nav-link"><i class="bi bi-car-front"></i><span>Véhicules</span></a>
+      <a href="#" class="admin-nav-link"><i class="bi bi-file-earmark-exclamation"></i><span>Docs manquants</span></a>
+      <a href="#" class="admin-nav-link"><i class="bi bi-gear"></i><span>Paramètres</span></a>
+    </nav>
+  </aside>
+
+  <div class="admin-main">
+    <header class="admin-topbar">
+      <div>
+        <p class="admin-page-label">Espace commercial</p>
+        <h1 class="admin-page-title">Demandes en cours</h1>
+        <p class="admin-page-subtitle">
+          Suivez l’ensemble des demandes de financement et priorisez les dossiers à traiter.
+        </p>
+      </div>
+    </header>
+
+    <div class="row g-4 mb-4">
+      <div class="col-xl-3 col-md-6">
+        <div class="admin-kpi-card">
+          <p class="admin-kpi-label">Demandes en cours</p>
+          <h2 class="admin-kpi-value">42</h2>
+        </div>
+      </div>
+
+      <div class="col-xl-3 col-md-6">
+        <div class="admin-kpi-card">
+          <p class="admin-kpi-label">En analyse</p>
+          <h2 class="admin-kpi-value">18</h2>
+        </div>
+      </div>
+
+      <div class="col-xl-3 col-md-6">
+        <div class="admin-kpi-card">
+          <p class="admin-kpi-label">Docs manquants</p>
+          <h2 class="admin-kpi-value">11</h2>
+        </div>
+      </div>
+
+      <div class="col-xl-3 col-md-6">
+        <div class="admin-kpi-card">
+          <p class="admin-kpi-label">Urgentes</p>
+          <h2 class="admin-kpi-value">5</h2>
+        </div>
+      </div>
+    </div>
+
+    <div class="admin-card mb-4">
+      <div class="admin-filters">
+        <div class="admin-search admin-search--full">
+          <i class="bi bi-search"></i>
+          <input type="text" placeholder="Rechercher un client, un véhicule, une référence...">
+        </div>
+
+        <select class="form-select admin-filter-select">
+          <option selected>Tous les statuts</option>
+          <option>En analyse</option>
+          <option>Documents manquants</option>
+          <option>En attente client</option>
+          <option>Validé</option>
+        </select>
+
+        <select class="form-select admin-filter-select">
+          <option selected>Tous les types</option>
+          <option>LLD</option>
+          <option>Achat</option>
+        </select>
+
+        <select class="form-select admin-filter-select">
+          <option selected>Tous les commerciaux</option>
+          <option>Claire Martin</option>
+          <option>Thomas Leroy</option>
+        </select>
+
+        <button class="btn admin-filter-btn">Filtrer</button>
+      </div>
+    </div>
+
+    <div class="admin-card">
+      <div class="admin-card-header">
+        <h2 class="admin-card-title">Liste des demandes</h2>
+        <a href="#" class="admin-card-link">Exporter</a>
+      </div>
+
+      <div class="table-responsive">
+        <table class="table admin-table align-middle">
+          <thead>
+            <tr>
+              <th>Réf</th>
+              <th>Client</th>
+              <th>Véhicule</th>
+              <th>Type</th>
+              <th>Montant</th>
+              <th>Statut</th>
+              <th>Complétude</th>
+              <th>Date dépôt</th>
+              <th>Commercial</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>#DOS-1024</td>
+              <td>Jean Dupont</td>
+              <td>Peugeot 3008</td>
+              <td>LLD</td>
+              <td>349 €/mois</td>
+              <td><span class="admin-badge pending">En analyse</span></td>
+              <td>
+                <div class="admin-mini-progress">
+                  <div class="admin-mini-progress-bar" style="width: 80%;"></div>
+                </div>
+                <small>80 %</small>
+              </td>
+              <td>12/03/2026</td>
+              <td>Claire Martin</td>
+              <td><a href="#" class="admin-table-link">Voir</a></td>
+            </tr>
+
+            <tr>
+              <td>#DOS-1023</td>
+              <td>Sophie Martin</td>
+              <td>Renault Clio</td>
+              <td>Achat</td>
+              <td>14 900 €</td>
+              <td><span class="admin-badge missing">Docs manquants</span></td>
+              <td>
+                <div class="admin-mini-progress">
+                  <div class="admin-mini-progress-bar warning" style="width: 55%;"></div>
+                </div>
+                <small>55 %</small>
+              </td>
+              <td>11/03/2026</td>
+              <td>Thomas Leroy</td>
+              <td><a href="#" class="admin-table-link">Voir</a></td>
+            </tr>
+
+            <tr>
+              <td>#DOS-1022</td>
+              <td>Karim Benali</td>
+              <td>BMW Série 1</td>
+              <td>LLD</td>
+              <td>429 €/mois</td>
+              <td><span class="admin-badge waiting">En attente client</span></td>
+              <td>
+                <div class="admin-mini-progress">
+                  <div class="admin-mini-progress-bar" style="width: 92%;"></div>
+                </div>
+                <small>92 %</small>
+              </td>
+              <td>10/03/2026</td>
+              <td>Claire Martin</td>
+              <td><a href="#" class="admin-table-link">Voir</a></td>
+            </tr>
+
+            <tr>
+              <td>#DOS-1021</td>
+              <td>Emma Petit</td>
+              <td>Audi A3</td>
+              <td>LLD</td>
+              <td>519 €/mois</td>
+              <td><span class="admin-badge urgent">Urgent</span></td>
+              <td>
+                <div class="admin-mini-progress">
+                  <div class="admin-mini-progress-bar danger" style="width: 40%;"></div>
+                </div>
+                <small>40 %</small>
+              </td>
+              <td>09/03/2026</td>
+              <td>Claire Martin</td>
+              <td><a href="#" class="admin-table-link">Voir</a></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
