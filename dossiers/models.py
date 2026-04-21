@@ -26,7 +26,7 @@ class Dossier(models.Model):
     class Status(models.TextChoices):
         DRAFT = "draft", "Brouillon"
         SUBMITTED = "submitted", "Soumis"
-        UNDER_REVIEW = "under_review", "En cours d'examen"
+        UNDER_REVIEW = "under_review", "En cours d'instruction"
         APPROVED = "approved", "Accepté"
         REJECTED = "rejected", "Refusé"
 
