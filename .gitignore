@@ -12,3 +12,4 @@ build/
 db.sqlite3
 media/
 staticfiles/
+documents/
