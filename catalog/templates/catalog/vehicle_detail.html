@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Détail véhicule</title>
+</head>
+<body>
+    <h1>{{ vehicle.brand }} {{ vehicle.model }}</h1>
+
+    <p><strong>Référence :</strong> {{ vehicle.reference }}</p>
+    <p><strong>Finition :</strong> {{ vehicle.trim|default:"Non renseignée" }}</p>
+    <p><strong>Catégorie :</strong> {{ vehicle.category|default:"Non renseignée" }}</p>
+    <p><strong>Année :</strong> {{ vehicle.year }}</p>
+    <p><strong>Kilométrage :</strong> {{ vehicle.mileage }} km</p>
+    <p><strong>Carburant :</strong> {{ vehicle.get_fuel_type_display }}</p>
+    <p><strong>Boîte :</strong> {{ vehicle.get_gearbox_display }}</p>
+    <p><strong>Type d’offre :</strong> {{ vehicle.get_offer_type_display }}</p>
+    <p><strong>Disponibilité :</strong> {{ vehicle.get_availability_status_display }}</p>
+
+    {% if vehicle.price_sale %}
+        <p><strong>Prix achat :</strong> {{ vehicle.price_sale }} €</p>
+    {% endif %}
+
+    {% if vehicle.price_monthly %}
+        <p><strong>Prix mensuel :</strong> {{ vehicle.price_monthly }} €</p>
+    {% endif %}
+
+    <p><strong>Description :</strong><br>{{ vehicle.description|linebreaks }}</p>
+
+    <p><a href="/catalog/">Retour au catalogue</a></p>
+</body>
+</html>
