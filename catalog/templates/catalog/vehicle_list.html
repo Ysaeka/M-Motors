@@ -8,6 +8,88 @@
 <body>
     <h1>Catalogue véhicules</h1>
 
+    <form method="get">
+        <div>
+            <label for="offer_type">Mode</label>
+            <select name="offer_type" id="offer_type">
+                <option value="">Tous</option>
+                <option value="sale" {% if selected_offer_type == "sale" %}selected{% endif %}>Achat</option>
+                <option value="lld" {% if selected_offer_type == "lld" %}selected{% endif %}>Location</option>
+            </select>
+        </div>
+
+        <div>
+            <label for="budget_max">{{ budget_label }}</label>
+            <input
+                type="range"
+                id="budget_max"
+                name="budget_max"
+                min="{{ budget_min }}"
+                max="{{ budget_max_limit }}"
+                step="{{ budget_step }}"
+                value="{{ selected_budget_max }}"
+                oninput="document.getElementById('budgetValue').textContent = new Intl.NumberFormat('fr-FR').format(this.value) + ' €'"
+            />
+            <div>
+                <span id="budgetValue">{{ selected_budget_max }} €</span>
+            </div>
+        </div>
+
+        <div>
+            <label for="brand">Marque</label>
+            <select name="brand" id="brand">
+                <option value="">Toutes les marques</option>
+                {% for brand in brands %}
+                    <option value="{{ brand }}" {% if selected_brand == brand %}selected{% endif %}>
+                        {{ brand }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div>
+            <label>Énergie</label>
+            <div>
+                <input type="checkbox" name="fuel_type" value="diesel" id="diesel"
+                    {% if "diesel" in selected_fuel_types %}checked{% endif %}>
+                <label for="diesel">Diesel</label>
+            </div>
+            <div>
+                <input type="checkbox" name="fuel_type" value="gasoline" id="essence"
+                    {% if "gasoline" in selected_fuel_types %}checked{% endif %}>
+                <label for="essence">Essence</label>
+            </div>
+            <div>
+                <input type="checkbox" name="fuel_type" value="electric" id="electrique"
+                    {% if "electric" in selected_fuel_types %}checked{% endif %}>
+                <label for="electrique">Électrique</label>
+            </div>
+            <div>
+                <input type="checkbox" name="fuel_type" value="hybrid" id="hybride"
+                    {% if "hybrid" in selected_fuel_types %}checked{% endif %}>
+                <label for="hybride">Hybride</label>
+            </div>
+        </div>
+
+        <div>
+            <label>Boîte</label>
+            <div>
+                <input type="checkbox" name="gearbox" value="manual" id="manuelle"
+                    {% if "manual" in selected_gearboxes %}checked{% endif %}>
+                <label for="manuelle">Manuelle</label>
+            </div>
+            <div>
+                <input type="checkbox" name="gearbox" value="automatic" id="auto"
+                    {% if "automatic" in selected_gearboxes %}checked{% endif %}>
+                <label for="auto">Automatique</label>
+            </div>
+        </div>
+
+        <div>
+            <button type="submit">Filtrer</button>
+        </div>
+    </form>
+    <hr>
     {% if vehicles %}
         <ul>
             {% for vehicle in vehicles %}
