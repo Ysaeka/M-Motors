@@ -119,5 +119,23 @@
     {% else %}
         <p>Aucun véhicule disponible.</p>
     {% endif %}
+
+    {% if page_obj.has_other_pages %}
+        <div>
+            {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}{% if selected_offer_type %}&offer_type={{ selected_offer_type }}{% endif %}{% if selected_budget_max %}&budget_max={{ selected_budget_max }}{% endif %}{% if selected_brand %}&brand={{ selected_brand }}{% endif %}{% for fuel in selected_fuel_types %}&fuel_type={{ fuel }}{% endfor %}{% for gearbox in selected_gearboxes %}&gearbox={{ gearbox }}{% endfor %}">
+                    Précédent
+                </a>
+            {% endif %}
+
+            <span>Page {{ page_obj.number }} sur {{ page_obj.paginator.num_pages }}</span>
+
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}{% if selected_offer_type %}&offer_type={{ selected_offer_type }}{% endif %}{% if selected_budget_max %}&budget_max={{ selected_budget_max }}{% endif %}{% if selected_brand %}&brand={{ selected_brand }}{% endif %}{% for fuel in selected_fuel_types %}&fuel_type={{ fuel }}{% endfor %}{% for gearbox in selected_gearboxes %}&gearbox={{ gearbox }}{% endfor %}">
+                    Suivant
+                </a>
+            {% endif %}
+        </div>
+    {% endif %}
 </body>
 </html>

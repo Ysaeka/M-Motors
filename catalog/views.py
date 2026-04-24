@@ -1,3 +1,4 @@
+from django.core.paginator import Paginator
 from django.shortcuts import get_object_or_404, render
 
 from .models import Vehicle
@@ -27,13 +28,13 @@ def vehicle_list(request):
     if offer_type == Vehicle.OfferType.LLD:
         budget_label = "Mensualité max"
         budget_min = 100
-        budget_max_limit = 2000
+        budget_max_limit = 1000
         budget_step = 10
         default_budget = 300
     else:
         budget_label = "Budget achat max"
         budget_min = 5000
-        budget_max_limit = 80000
+        budget_max_limit = 50000
         budget_step = 500
         default_budget = 15000
 
@@ -51,11 +52,16 @@ def vehicle_list(request):
 
     brands = Vehicle.objects.values_list("brand", flat=True).distinct().order_by("brand")
 
+    paginator = Paginator(vehicles, 6)
+    page_number = request.GET.get("page")
+    page_obj = paginator.get_page(page_number)
+
     return render(
         request,
         "catalog/vehicle_list.html",
         {
-            "vehicles": vehicles,
+            "vehicles": page_obj,
+            "page_obj": page_obj,
             "brands": brands,
             "selected_offer_type": offer_type,
             "selected_budget_max": budget_max,
