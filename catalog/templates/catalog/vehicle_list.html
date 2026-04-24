@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Catalogue véhicules</title>
+</head>
+<body>
+    <h1>Catalogue véhicules</h1>
+
+    {% if vehicles %}
+        <ul>
+            {% for vehicle in vehicles %}
+                <li>
+                    <strong>{{ vehicle.brand }} {{ vehicle.model }}</strong><br>
+                    Référence : {{ vehicle.reference }}<br>
+                    Année : {{ vehicle.year }}<br>
+                    Offre : {{ vehicle.get_offer_type_display }}<br>
+                    Statut : {{ vehicle.get_availability_status_display }}<br>
+
+                    {% if vehicle.price_sale %}
+                        Prix achat : {{ vehicle.price_sale }} €
+                    {% endif %}
+
+                    {% if vehicle.price_monthly %}
+                        {% if vehicle.price_sale %} | {% endif %}
+                        Prix mensuel : {{ vehicle.price_monthly }} €
+                    {% endif %}
+                </li>
+                <hr>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>Aucun véhicule disponible.</p>
+    {% endif %}
+</body>
+</html>
