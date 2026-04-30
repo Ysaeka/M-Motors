@@ -1,5 +1,3 @@
-# Create your tests here.
-
 from django.test import TestCase
 from django.urls import reverse
 
@@ -50,8 +48,8 @@ class CatalogViewsTests(TestCase):
 
     def test_vehicle_list_displays_vehicles(self):
         response = self.client.get(reverse("vehicle_list"))
-        self.assertContains(response, "Peugeot")
-        self.assertContains(response, "Renault")
+        self.assertContains(response, "Peugeot 208 2021")
+        self.assertContains(response, "Renault Clio 2022")
 
     def test_vehicle_detail_returns_200(self):
         response = self.client.get(reverse("vehicle_detail", args=[self.vehicle_sale.pk]))
@@ -65,13 +63,23 @@ class CatalogViewsTests(TestCase):
 
     def test_vehicle_list_filter_by_offer_type_sale(self):
         response = self.client.get(reverse("vehicle_list"), {"offer_type": "sale"})
-        self.assertContains(response, "TEST-SALE-001")
-        self.assertNotContains(response, "TEST-LLD-001")
+        self.assertContains(response, "Peugeot 208 2021")
+        self.assertContains(response, "Offre : Achat")
+        self.assertNotContains(response, "Renault Clio 2022")
+        self.assertNotContains(response, "Offre : Location")
 
     def test_vehicle_list_filter_by_offer_type_lld(self):
         response = self.client.get(reverse("vehicle_list"), {"offer_type": "lld"})
-        self.assertContains(response, "TEST-LLD-001")
+        self.assertContains(response, "Renault Clio 2022")
+        self.assertContains(response, "Offre : Location")
+        self.assertNotContains(response, "Peugeot 208 2021")
+        self.assertNotContains(response, "Offre : Achat")
+
+    def test_vehicle_references_are_hidden_for_public_users(self):
+        response = self.client.get(reverse("vehicle_list"))
         self.assertNotContains(response, "TEST-SALE-001")
+        self.assertNotContains(response, "TEST-LLD-001")
+
 
 class VehicleModelTests(TestCase):
     def test_vehicle_str_returns_brand_model_and_reference(self):

@@ -1,33 +1,175 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Détail véhicule</title>
-</head>
-<body>
-    <h1>{{ vehicle.brand }} {{ vehicle.model }}</h1>
+{% extends "base.html" %}
+{% load static %}
 
-    <p><strong>Référence :</strong> {{ vehicle.reference }}</p>
-    <p><strong>Finition :</strong> {{ vehicle.trim|default:"Non renseignée" }}</p>
-    <p><strong>Catégorie :</strong> {{ vehicle.category|default:"Non renseignée" }}</p>
-    <p><strong>Année :</strong> {{ vehicle.year }}</p>
-    <p><strong>Kilométrage :</strong> {{ vehicle.mileage }} km</p>
-    <p><strong>Carburant :</strong> {{ vehicle.get_fuel_type_display }}</p>
-    <p><strong>Boîte :</strong> {{ vehicle.get_gearbox_display }}</p>
-    <p><strong>Type d’offre :</strong> {{ vehicle.get_offer_type_display }}</p>
-    <p><strong>Disponibilité :</strong> {{ vehicle.get_availability_status_display }}</p>
+{% block title %}{{ vehicle.brand }} {{ vehicle.model }} - M Motors{% endblock %}
 
-    {% if vehicle.price_sale %}
-        <p><strong>Prix achat :</strong> {{ vehicle.price_sale }} €</p>
-    {% endif %}
+{% block content %}
+<section class="catalog-hero">
+  <div class="container-fluid px-4 px-lg-5">
+    <h1 class="catalog-hero-title mb-0">Détail du véhicule</h1>
+  </div>
+</section>
 
-    {% if vehicle.price_monthly %}
-        <p><strong>Prix mensuel :</strong> {{ vehicle.price_monthly }} €</p>
-    {% endif %}
+<section class="py-5">
+  <div class="container-fluid px-4 px-lg-5">
+    <div class="mb-4">
+      <a href="{% url 'vehicle_list' %}" class="btn btn-back">
+        <i class="bi bi-arrow-left me-2"></i>Retour au catalogue
+      </a>
+    </div>
 
-    <p><strong>Description :</strong><br>{{ vehicle.description|linebreaks }}</p>
+    <div class="vehicle-detail-card card border-0 shadow-sm">
+      <div class="card-body p-4 p-lg-5">
 
-    <p><a href="/catalog/">Retour au catalogue</a></p>
-</body>
-</html>
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
+          <div>
+            <span class="vehicle-badge">
+              {{ vehicle.get_availability_status_display }}
+            </span>
+
+            <h2 class="vehicle-detail-title mt-3 mb-1">
+              {{ vehicle.brand }} {{ vehicle.model }} <span>{{ vehicle.year }}</span>
+            </h2>
+
+            <p class="vehicle-list-meta mb-0">
+              {{ vehicle.get_fuel_type_display }} • {{ vehicle.mileage }} km • {{ vehicle.get_gearbox_display }}
+            </p>
+
+            {% if request.user.is_staff %}
+              <p class="text-muted mt-2 mb-0">
+                Référence : {{ vehicle.reference }}
+              </p>
+            {% endif %}
+          </div>
+
+          <button class="btn btn-outline-secondary btn-sm" type="button">
+            <i class="bi bi-heart me-2"></i>Ajouter aux favoris
+          </button>
+        </div>
+
+        <div class="vehicle-detail-image-wrapper mb-4">
+          <img
+            src="{% static 'img/concession.png' %}"
+            alt="{{ vehicle.brand }} {{ vehicle.model }}"
+            class="vehicle-detail-image img-fluid w-100"
+          />
+        </div>
+
+        <div class="row g-4 mb-4">
+          {% if vehicle.price_sale %}
+            <div class="col-md-4">
+              <div class="price-box h-100">
+                <p class="price-label mb-2">Prix d’achat</p>
+                <p class="price-value mb-0">{{ vehicle.price_sale }} €</p>
+              </div>
+            </div>
+          {% endif %}
+
+          {% if vehicle.price_monthly %}
+            <div class="col-md-4">
+              <div class="price-box h-100">
+                <p class="price-label mb-2">Location longue durée</p>
+                <p class="rent-value mb-0">{{ vehicle.price_monthly }} € <span>/ mois</span></p>
+              </div>
+            </div>
+          {% endif %}
+
+          <div class="col-md-4">
+            <div class="price-box h-100">
+              <p class="price-label mb-2">Type d’offre</p>
+              <p class="rent-value mb-0">{{ vehicle.get_offer_type_display }}</p>
+              <small class="text-muted">Selon disponibilité du véhicule</small>
+            </div>
+          </div>
+        </div>
+
+        <div class="vehicle-quick-info mb-4">
+          <div class="row g-3">
+            <div class="col-md-3 col-6">
+              <div class="quick-info-item">
+                <span class="quick-info-label">Énergie</span>
+                <span class="quick-info-value">{{ vehicle.get_fuel_type_display }}</span>
+              </div>
+            </div>
+
+            <div class="col-md-3 col-6">
+              <div class="quick-info-item">
+                <span class="quick-info-label">Boîte</span>
+                <span class="quick-info-value">{{ vehicle.get_gearbox_display }}</span>
+              </div>
+            </div>
+
+            <div class="col-md-3 col-6">
+              <div class="quick-info-item">
+                <span class="quick-info-label">Kilométrage</span>
+                <span class="quick-info-value">{{ vehicle.mileage }} km</span>
+              </div>
+            </div>
+
+            <div class="col-md-3 col-6">
+              <div class="quick-info-item">
+                <span class="quick-info-label">Année</span>
+                <span class="quick-info-value">{{ vehicle.year }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <ul class="nav vehicle-detail-tabs mb-4">
+          <li class="nav-item">
+            <button class="nav-link active" type="button">Description</button>
+          </li>
+          <li class="nav-item">
+            <button class="nav-link" type="button">Caractéristiques</button>
+          </li>
+          <li class="nav-item">
+            <button class="nav-link" type="button">Options incluses</button>
+          </li>
+        </ul>
+
+        <div class="vehicle-detail-content mb-4">
+          <div class="mb-4">
+            {{ vehicle.description|linebreaks }}
+          </div>
+
+          <div class="row g-3">
+            <div class="col-md-6">
+              <div class="feature-item">
+                <i class="bi bi-check-circle-fill"></i>
+                <span>Finition : {{ vehicle.trim|default:"Non renseignée" }}</span>
+              </div>
+            </div>
+
+            <div class="col-md-6">
+              <div class="feature-item">
+                <i class="bi bi-check-circle-fill"></i>
+                <span>Catégorie : {{ vehicle.category|default:"Non renseignée" }}</span>
+              </div>
+            </div>
+
+            <div class="col-md-6">
+              <div class="feature-item">
+                <i class="bi bi-check-circle-fill"></i>
+                <span>Disponibilité : {{ vehicle.get_availability_status_display }}</span>
+              </div>
+            </div>
+
+            <div class="col-md-6">
+              <div class="feature-item">
+                <i class="bi bi-check-circle-fill"></i>
+                <span>Offre : {{ vehicle.get_offer_type_display }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="vehicle-detail-actions d-flex flex-column flex-md-row gap-3">
+          <a href="#" class="btn btn-secondary-detail flex-fill">Réserver ce véhicule</a>
+          <a href="#" class="btn btn-detail flex-fill">Déposer un dossier</a>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

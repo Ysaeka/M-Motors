@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+
+{% block title %}Accueil - M Motors{% endblock %}
+
+{% block content %}
+<section class="hero">
+  <div class="container-fluid px-4 px-lg-5">
+    <div class="row">
+      <div class="col-lg-8">
+        <h1 class="hero-title">
+          <strong>Trouvez votre véhicule en</strong><br />
+          Achat ou Location longue durée
+        </h1>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="search-box-wrapper">
+  <div class="container-fluid px-4 px-lg-5">
+    <div class="row justify-content-center">
+      <div class="col-xl-10">
+        <ul class="nav search-tabs">
+          <li class="nav-item">
+            <button class="nav-link active" type="button" id="tab-location">
+              Location
+            </button>
+          </li>
+          <li class="nav-item">
+            <button class="nav-link" type="button" id="tab-achat">
+              Achat
+            </button>
+          </li>
+        </ul>
+
+        <div class="search-box" id="search-box">
+          <div class="row g-4 align-items-center">
+            <div class="col-lg-3">
+              <select class="form-select">
+                <option selected>Marque</option>
+                <option>BMW</option>
+                <option>Peugeot</option>
+                <option>Renault</option>
+              </select>
+            </div>
+
+            <div class="col-lg-3">
+              <select class="form-select">
+                <option selected>Modèle</option>
+                <option>208</option>
+                <option>Clio</option>
+                <option>Série 1</option>
+              </select>
+            </div>
+
+            <div class="col-lg-3">
+              <select class="form-select" id="price-select">
+                <option selected>Mensualité</option>
+                <option>200 € / mois</option>
+                <option>300 € / mois</option>
+                <option>400 € / mois</option>
+              </select>
+            </div>
+
+            <div class="col-lg-3">
+              <button class="btn btn-search w-100" type="button">Rechercher</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="benefits">
+  <div class="container-fluid px-4 px-lg-5">
+    <div class="row text-center justify-content-center g-5">
+      <div class="col-lg-4">
+        <div class="benefit-icon">
+          <i class="bi bi-car-front-fill"></i>
+        </div>
+        <h3 class="benefit-title">Large choix de véhicules</h3>
+        <p class="benefit-text">
+          Nous vous proposons un choix de plus de 50 000 véhicules
+        </p>
+      </div>
+
+      <div class="col-lg-2">
+        <div class="benefit-icon">
+          <i class="bi bi-sign-turn-right-fill"></i>
+        </div>
+        <h3 class="benefit-title">Achat ou Location</h3>
+        <p class="benefit-text">
+          Selon votre budget vous pouvez acheter ou louer votre nouvelle voiture
+        </p>
+      </div>
+
+      <div class="col-lg-4">
+        <div class="benefit-icon">
+          <i class="bi bi-headset"></i>
+        </div>
+        <h3 class="benefit-title">Dossier 100 % en ligne</h3>
+        <p class="benefit-text">
+          Déposez votre dossier en ligne et suivez l’avancement de votre demande
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
