@@ -1,141 +1,205 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Catalogue véhicules</title>
-</head>
-<body>
-    <h1>Catalogue véhicules</h1>
+{% extends "base.html" %}
+{% load static %}
 
-    <form method="get">
-        <div>
-            <label for="offer_type">Mode</label>
-            <select name="offer_type" id="offer_type">
-                <option value="">Tous</option>
-                <option value="sale" {% if selected_offer_type == "sale" %}selected{% endif %}>Achat</option>
-                <option value="lld" {% if selected_offer_type == "lld" %}selected{% endif %}>Location</option>
+{% block title %}Catalogue - M Motors{% endblock %}
+
+{% block content %}
+<section class="catalog-hero">
+  <div class="container-fluid px-4 px-lg-5">
+    <h1 class="catalog-hero-title mb-0">Catalogue</h1>
+  </div>
+</section>
+
+<main class="py-5">
+  <div class="container-fluid px-4 px-lg-5">
+    <div class="row g-4">
+
+      <aside class="col-lg-3">
+        <form method="get" class="filter-box">
+          <h2 class="filter-title">Filtres</h2>
+
+          <div class="filter-group">
+            <label for="offer_type" class="form-label">Mode</label>
+            <select name="offer_type" id="offer_type" class="form-select">
+              <option value="">Tous</option>
+              <option value="sale" {% if selected_offer_type == "sale" %}selected{% endif %}>Achat</option>
+              <option value="lld" {% if selected_offer_type == "lld" %}selected{% endif %}>Location</option>
             </select>
-        </div>
+          </div>
 
-        <div>
-            <label for="budget_max">{{ budget_label }}</label>
+          <div class="filter-group">
+            <label for="budget_max" class="form-label">{{ budget_label }}</label>
+            <div class="budget-value">
+              <span id="budgetValue">{{ selected_budget_max }} €</span>
+            </div>
             <input
-                type="range"
-                id="budget_max"
-                name="budget_max"
-                min="{{ budget_min }}"
-                max="{{ budget_max_limit }}"
-                step="{{ budget_step }}"
-                value="{{ selected_budget_max }}"
-                oninput="document.getElementById('budgetValue').textContent = new Intl.NumberFormat('fr-FR').format(this.value) + ' €'"
+              type="range"
+              class="form-range custom-budget-range"
+              id="budget_max"
+              name="budget_max"
+              min="{{ budget_min }}"
+              max="{{ budget_max_limit }}"
+              step="{{ budget_step }}"
+              value="{{ selected_budget_max }}"
+              oninput="document.getElementById('budgetValue').textContent = new Intl.NumberFormat('fr-FR').format(this.value) + ' €'"
             />
-            <div>
-                <span id="budgetValue">{{ selected_budget_max }} €</span>
-            </div>
-        </div>
+          </div>
 
-        <div>
-            <label for="brand">Marque</label>
-            <select name="brand" id="brand">
-                <option value="">Toutes les marques</option>
-                {% for brand in brands %}
-                    <option value="{{ brand }}" {% if selected_brand == brand %}selected{% endif %}>
-                        {{ brand }}
-                    </option>
-                {% endfor %}
+          <div class="filter-group">
+            <label for="brand" class="form-label">Marque</label>
+            <select name="brand" id="brand" class="form-select">
+              <option value="">Toutes les marques</option>
+              {% for brand in brands %}
+                <option value="{{ brand }}" {% if selected_brand == brand %}selected{% endif %}>
+                  {{ brand }}
+                </option>
+              {% endfor %}
             </select>
+          </div>
+
+          <div class="filter-group">
+            <label class="form-label">Énergie</label>
+
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="fuel_type" value="diesel" id="diesel"
+                {% if "diesel" in selected_fuel_types %}checked{% endif %}>
+              <label class="form-check-label" for="diesel">Diesel</label>
+            </div>
+
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="fuel_type" value="gasoline" id="essence"
+                {% if "gasoline" in selected_fuel_types %}checked{% endif %}>
+              <label class="form-check-label" for="essence">Essence</label>
+            </div>
+
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="fuel_type" value="electric" id="electrique"
+                {% if "electric" in selected_fuel_types %}checked{% endif %}>
+              <label class="form-check-label" for="electrique">Électrique</label>
+            </div>
+
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="fuel_type" value="hybrid" id="hybride"
+                {% if "hybrid" in selected_fuel_types %}checked{% endif %}>
+              <label class="form-check-label" for="hybride">Hybride</label>
+            </div>
+          </div>
+
+          <div class="filter-group">
+            <label class="form-label">Boîte</label>
+
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="gearbox" value="manual" id="manuelle"
+                {% if "manual" in selected_gearboxes %}checked{% endif %}>
+              <label class="form-check-label" for="manuelle">Manuelle</label>
+            </div>
+
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="gearbox" value="automatic" id="auto"
+                {% if "automatic" in selected_gearboxes %}checked{% endif %}>
+              <label class="form-check-label" for="auto">Automatique</label>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-search w-100">Filtrer</button>
+        </form>
+      </aside>
+
+      <section class="col-lg-9">
+        <div class="catalog-topbar d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+          <div>
+            <h2 class="catalog-title mb-1">Nos véhicules</h2>
+            <p class="catalog-subtitle mb-0">Trouvez l’offre adaptée à votre besoin</p>
+          </div>
         </div>
 
-        <div>
-            <label>Énergie</label>
-            <div>
-                <input type="checkbox" name="fuel_type" value="diesel" id="diesel"
-                    {% if "diesel" in selected_fuel_types %}checked{% endif %}>
-                <label for="diesel">Diesel</label>
-            </div>
-            <div>
-                <input type="checkbox" name="fuel_type" value="gasoline" id="essence"
-                    {% if "gasoline" in selected_fuel_types %}checked{% endif %}>
-                <label for="essence">Essence</label>
-            </div>
-            <div>
-                <input type="checkbox" name="fuel_type" value="electric" id="electrique"
-                    {% if "electric" in selected_fuel_types %}checked{% endif %}>
-                <label for="electrique">Électrique</label>
-            </div>
-            <div>
-                <input type="checkbox" name="fuel_type" value="hybrid" id="hybride"
-                    {% if "hybrid" in selected_fuel_types %}checked{% endif %}>
-                <label for="hybride">Hybride</label>
-            </div>
-        </div>
-
-        <div>
-            <label>Boîte</label>
-            <div>
-                <input type="checkbox" name="gearbox" value="manual" id="manuelle"
-                    {% if "manual" in selected_gearboxes %}checked{% endif %}>
-                <label for="manuelle">Manuelle</label>
-            </div>
-            <div>
-                <input type="checkbox" name="gearbox" value="automatic" id="auto"
-                    {% if "automatic" in selected_gearboxes %}checked{% endif %}>
-                <label for="auto">Automatique</label>
-            </div>
-        </div>
-
-        <div>
-            <button type="submit">Filtrer</button>
-        </div>
-    </form>
-    <hr>
-    {% if vehicles %}
-        <ul>
+        {% if vehicles %}
+          <div class="d-flex flex-column gap-4">
             {% for vehicle in vehicles %}
-                <li>
-                    <strong>
-                        <a href="{% url 'vehicle_detail' vehicle.pk %}">
-                            {{ vehicle.brand }} {{ vehicle.model }}
+              <article class="vehicle-list-card card border-0 shadow-sm">
+                <div class="row g-0">
+                  <div class="col-md-4">
+                    <img
+                      src="{% static 'img/concession.png' %}"
+                      alt="{{ vehicle.brand }} {{ vehicle.model }}"
+                      class="vehicle-list-image img-fluid h-100 w-100"
+                    />
+                  </div>
+
+                  <div class="col-md-8">
+                    <div class="card-body p-4">
+                      <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-3">
+                        <div>
+                          <span class="vehicle-badge">
+                            {{ vehicle.get_availability_status_display }}
+                          </span>
+
+                          <h3 class="vehicle-list-title mt-2 mb-1">
+                            {{ vehicle.brand }} {{ vehicle.model }} {{ vehicle.year }}
+                          </h3>
+
+                          <p class="vehicle-list-meta mb-0">
+                            {{ vehicle.get_fuel_type_display }} • {{ vehicle.get_gearbox_display }}
+                          </p>
+                        </div>
+
+                        <div class="text-md-end">
+                          {% if vehicle.price_sale %}
+                            <p class="vehicle-price mb-1">{{ vehicle.price_sale }} €</p>
+                          {% endif %}
+
+                          {% if vehicle.price_monthly %}
+                            <p class="vehicle-rent mb-0">ou {{ vehicle.price_monthly }} €/mois</p>
+                          {% endif %}
+                        </div>
+                      </div>
+
+                      <p class="vehicle-list-text mb-3">
+                        {% if request.user.is_staff %}
+                          Référence : {{ vehicle.reference }}<br>
+                        {% endif %}
+                        Offre : {{ vehicle.get_offer_type_display }}
+                      </p>
+
+                      <div class="d-flex justify-content-end">
+                        <a href="{% url 'vehicle_detail' vehicle.pk %}" class="btn btn-detail">
+                          Voir le détail
                         </a>
-                    </strong><br>
-                    Référence : {{ vehicle.reference }}<br>
-                    Année : {{ vehicle.year }}<br>
-                    Offre : {{ vehicle.get_offer_type_display }}<br>
-                    Statut : {{ vehicle.get_availability_status_display }}<br>
-
-                    {% if vehicle.price_sale %}
-                        Prix achat : {{ vehicle.price_sale }} €
-                    {% endif %}
-
-                    {% if vehicle.price_monthly %}
-                        {% if vehicle.price_sale %} | {% endif %}
-                        Prix mensuel : {{ vehicle.price_monthly }} €
-                    {% endif %}
-                </li>
-                <hr>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </article>
             {% endfor %}
-        </ul>
-    {% else %}
-        <p>Aucun véhicule disponible.</p>
-    {% endif %}
+          </div>
+        {% else %}
+          <div class="alert alert-light border">
+            Aucun véhicule disponible.
+          </div>
+        {% endif %}
 
-    {% if page_obj.has_other_pages %}
-        <div>
-            {% if page_obj.has_previous %}
-                <a href="?page={{ page_obj.previous_page_number }}{% if selected_offer_type %}&offer_type={{ selected_offer_type }}{% endif %}{% if selected_budget_max %}&budget_max={{ selected_budget_max }}{% endif %}{% if selected_brand %}&brand={{ selected_brand }}{% endif %}{% for fuel in selected_fuel_types %}&fuel_type={{ fuel }}{% endfor %}{% for gearbox in selected_gearboxes %}&gearbox={{ gearbox }}{% endfor %}">
-                    Précédent
+        {% if page_obj.has_other_pages %}
+          <nav class="mt-5" aria-label="Pagination catalogue">
+            <div class="d-flex justify-content-center align-items-center gap-3">
+              {% if page_obj.has_previous %}
+                <a class="btn btn-outline-secondary" href="?page={{ page_obj.previous_page_number }}{% if selected_offer_type %}&offer_type={{ selected_offer_type }}{% endif %}{% if selected_budget_max %}&budget_max={{ selected_budget_max }}{% endif %}{% if selected_brand %}&brand={{ selected_brand }}{% endif %}{% for fuel in selected_fuel_types %}&fuel_type={{ fuel }}{% endfor %}{% for gearbox in selected_gearboxes %}&gearbox={{ gearbox }}{% endfor %}">
+                  Précédent
                 </a>
-            {% endif %}
+              {% endif %}
 
-            <span>Page {{ page_obj.number }} sur {{ page_obj.paginator.num_pages }}</span>
+              <span>Page {{ page_obj.number }} sur {{ page_obj.paginator.num_pages }}</span>
 
-            {% if page_obj.has_next %}
-                <a href="?page={{ page_obj.next_page_number }}{% if selected_offer_type %}&offer_type={{ selected_offer_type }}{% endif %}{% if selected_budget_max %}&budget_max={{ selected_budget_max }}{% endif %}{% if selected_brand %}&brand={{ selected_brand }}{% endif %}{% for fuel in selected_fuel_types %}&fuel_type={{ fuel }}{% endfor %}{% for gearbox in selected_gearboxes %}&gearbox={{ gearbox }}{% endfor %}">
-                    Suivant
+              {% if page_obj.has_next %}
+                <a class="btn btn-outline-secondary" href="?page={{ page_obj.next_page_number }}{% if selected_offer_type %}&offer_type={{ selected_offer_type }}{% endif %}{% if selected_budget_max %}&budget_max={{ selected_budget_max }}{% endif %}{% if selected_brand %}&brand={{ selected_brand }}{% endif %}{% for fuel in selected_fuel_types %}&fuel_type={{ fuel }}{% endfor %}{% for gearbox in selected_gearboxes %}&gearbox={{ gearbox }}{% endfor %}">
+                  Suivant
                 </a>
-            {% endif %}
-        </div>
-    {% endif %}
-</body>
-</html>
+              {% endif %}
+            </div>
+          </nav>
+        {% endif %}
+      </section>
+
+    </div>
+  </div>
+</main>
+{% endblock %}
