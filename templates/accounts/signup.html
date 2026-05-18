@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="register-section">
+  <div class="container-fluid px-4 px-lg-5">
+    <div class="row justify-content-center">
+      <div class="col-xl-4 col-lg-5 col-md-7 col-sm-9 col-12">
+        <div class="register-card">
+          <p class="register-label">Espace client</p>
+          <h1 class="register-title">Créer un compte</h1>
+          <p class="register-text">
+            Créez votre espace personnel pour suivre votre dossier, gérer vos demandes
+            et accéder à vos informations en ligne.
+          </p>
+
+          <form method="post" class="register-form">
+            {% csrf_token %}
+
+            <div class="mb-3">
+              <label for="{{ form.username.id_for_label }}" class="register-form-label">
+                Nom d'utilisateur
+              </label>
+              {{ form.username }}
+              {{ form.username.errors }}
+            </div>
+
+            <div class="mb-3">
+              <label for="{{ form.email.id_for_label }}" class="register-form-label">
+                Adresse email
+              </label>
+              {{ form.email }}
+              <small class="register-help">Cet email servira d’identifiant de contact.</small>
+              {{ form.email.errors }}
+            </div>
+
+            <div class="mb-3">
+              <label for="{{ form.password1.id_for_label }}" class="register-form-label">
+                Mot de passe
+              </label>
+              {{ form.password1 }}
+              {{ form.password1.errors }}
+            </div>
+
+            <div class="mb-4">
+              <label for="{{ form.password2.id_for_label }}" class="register-form-label">
+                Confirmer le mot de passe
+              </label>
+              {{ form.password2 }}
+              {{ form.password2.errors }}
+            </div>
+
+            <button type="submit" class="btn register-btn w-100">
+              Créer mon compte
+            </button>
+          </form>
+
+          <p class="register-terms">
+            En créant un compte, vous acceptez nos conditions d’utilisation
+            et notre politique de confidentialité.
+          </p>
+
+          <div class="register-login-link">
+            <span>Vous avez déjà un compte ?</span>
+            <a href="{% url 'login' %}">Se connecter</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
