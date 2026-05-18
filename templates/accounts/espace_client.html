@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<section class="client-dashboard-section">
+    <div class="container-fluid px-4 px-lg-5">
+        
+        <div class="dashboard-header">
+            <div>
+                <p class="dashboard-label">Espace client</p>
+                <h1 class="dashboard-title">Mon espace client</h1>
+                <p class="dashboard-subtitle">
+                Consultez vos informations, vos recherches récentes et vos demandes de financement.
+                </p>
+            </div>
+            <a href="#" class="btn btn-client-edit">Modifier mon profil</a>
+        </div>
+
+        <div class="row g-4 mb-4">
+            <div class="col-lg-6">
+                <div class="dashboard-card">
+                    <h2 class="dashboard-card-title">Mes informations personnelles</h2>
+                    <div class="info-list">
+                        <div>
+                            <strong>Nom :</strong>
+                            {{ request.user.get_full_name|default:request.user.username }}
+                        </div>
+                        <div>
+                            <strong>Email :</strong>
+                            {{ request.user.email|default:"Non renseigné" }}
+                        </div>
+                        <div><strong>Téléphone :</strong> Non renseigné</div>
+                        <div><strong>Adresse :</strong> Non renseignée</div>
+                        <div><strong>Numéro client :</strong> En cours de création</div>
+                    </div>
+                </div>
+            </div>
+        
+
+            <div class="col-lg-6">
+                <div class="dashboard-card">
+                    <h2 class="dashboard-card-title">Dernières recherches</h2>
+
+                    <div class="search-history-item">
+                        <div>
+                        <h3>Peugeot 208</h3>
+                        <p>Location • 250 €/mois • Recherche du 12/03/2026</p>
+                        </div>
+                        <a href="#" class="dashboard-link">Voir</a>
+                    </div>
+
+                    <div class="search-history-item">
+                        <div>
+                        <h3>Renault Clio</h3>
+                        <p>Achat • Budget 14 000 € • Recherche du 09/03/2026</p>
+                        </div>
+                        <a href="#" class="dashboard-link">Voir</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="dashboard-card">
+        <h2 class="dashboard-card-title">Mes demandes de financement en cours</h2>
+
+        <div class="finance-request-card">
+            <div class="finance-car">
+            <img src="https://images.unsplash.com/photo-1552519507-da3b142c6e3d?auto=format&fit=crop&w=600&q=80" alt="Ford Mustang" class="finance-car-image">
+            </div>
+
+            <div class="finance-content">
+            <h3 class="finance-title">Ford Mustang GT</h3>
+            <p class="finance-meta">Location longue durée • 489 €/mois</p>
+            <p class="finance-date">Dossier déposé le 10/03/2026</p>
+            </div>
+
+            <div class="finance-status-block">
+            <span class="status-badge status-pending">En cours d’analyse</span>
+            <a href="#" class="btn btn-finance-detail">Voir le dossier</a>
+            </div>
+        </div>
+
+        <div class="finance-request-card">
+            <div class="finance-car">
+            <img src="https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=600&q=80" alt="Peugeot 3008" class="finance-car-image">
+            </div>
+
+            <div class="finance-content">
+            <h3 class="finance-title">Peugeot 3008</h3>
+            <p class="finance-meta">Achat • 21 900 €</p>
+            <p class="finance-date">Dossier déposé le 06/03/2026</p>
+            </div>
+
+            <div class="finance-status-block">
+            <span class="status-badge status-missing">Documents manquants</span>
+            <a href="#" class="btn btn-finance-detail">Compléter</a>
+            </div>
+        </div>
+        </div>
+
+    </div>
+</section>
+{% endblock %}

@@ -31,7 +31,23 @@
           <a href="/" class="nav-link-custom">Accueil</a>
           <a href="/catalog/" class="nav-link-custom">Catalogue</a>
           <a href="/contact/" class="nav-link-custom">Contact</a>
-          <a href="/login/" class="btn btn-client ms-lg-4">Espace client</a>
+          {% if user.is_authenticated %}
+            <a href="{% url 'accounts:espace_client' %}" class="btn btn-client ms-lg-4">
+              Mon espace
+            </a>
+
+            <form method="post" action="{% url 'logout' %}" class="d-inline ms-lg-2">
+              {% csrf_token %}
+              <button type="submit" class="btn btn outline-secondary">
+                Déconnexion
+              </button>
+            </form>
+          {% else %}
+            <a href="{% url 'login' %}" class="btn btn-client ms-lg-4">
+              Espace client
+            </a>
+          {% endif %}
+
         </div>
       </div>
     </div>

@@ -3,17 +3,25 @@ import os
 from urllib.parse import urlparse
 from dotenv import load_dotenv
 
+# =========================
+# Paths and environment
+# =========================
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / ".env")
 
+# =========================
+# Security
+# =========================
 
 SECRET_KEY = os.getenv("SECRET_KEY", "fallback-secret-key")
 DEBUG = os.getenv("DEBUG", "False") == "True"
 ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "127.0.0.1,localhost").split(",")
 
 
-# Application definition
+# =========================
+# Django applications
+# =========================
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -25,6 +33,7 @@ INSTALLED_APPS = [
     'core',
     'catalog',
     'dossiers',
+    'accounts',
 ]
 
 MIDDLEWARE = [
@@ -57,8 +66,11 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'config.wsgi.application'
 
-
+# =========================
 # Database
+# Local: SQLite
+# Production: PostgreSQL via DATABASE_URL
+# =========================
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 
@@ -118,8 +130,9 @@ USE_I18N = True
 USE_TZ = True
 
 
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/6.0/howto/static-files/
+# =========================
+# Static files
+# =========================
 
 STATIC_URL = 'static/'
 STATICFILES_DIRS = [
@@ -128,3 +141,10 @@ STATICFILES_DIRS = [
 STATIC_ROOT = BASE_DIR / "staticfiles"
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
+# =========================
+# Authentication redirects
+# =========================
+
+LOGIN_REDIRECT_URL = "accounts:espace_client"
+LOGIN_URL = "login"
+LOGOUT_REDIRECT_URL = "home"
