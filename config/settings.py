@@ -99,8 +99,9 @@ else:
     }
 
 
+# =========================
 # Password validation
-# https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
+# =========================
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -108,6 +109,9 @@ AUTH_PASSWORD_VALIDATORS = [
     },
     {
         'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+    },
+    {
+        "NAME": "accounts.validators.CustomPasswordValidator",
     },
     {
         'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
