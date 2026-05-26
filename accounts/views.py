@@ -3,13 +3,30 @@ from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
 
-from .forms import ClientSignUpForm
+from .models import ClientProfile
+from .forms import ClientProfileForm, ClientSignUpForm
+
 
 
 @login_required
 def espace_client(request):
-    return render(request, "accounts/espace_client.html")
+    profile, _ = ClientProfile.objects.get_or_create(user=request.user)
+    return render(request, "accounts/espace_client.html", {"profile": profile})
 
+@login_required
+def profil(request):
+    profile, _ = ClientProfile.objects.get_or_create(user=request.user)
+
+    if request.method == "POST":
+        form = ClientProfileForm(request.POST, user=request.user, profile=profile)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Votre profil a bien été mis à jour.")
+            return redirect("accounts:profil")
+    else:
+        form = ClientProfileForm(user=request.user, profile=profile)
+
+    return render(request, "accounts/profil.html", {"form": form})
 
 def signup(request):
     if request.method == "POST":

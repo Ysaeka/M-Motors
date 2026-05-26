@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+ {% extends "base.html" %}
 
 {% block content %}
 
@@ -13,7 +13,7 @@
                 Consultez vos informations, vos recherches récentes et vos demandes de financement.
                 </p>
             </div>
-            <a href="#" class="btn btn-client-edit">Modifier mon profil</a>
+            <a href="{% url 'accounts:profil' %}" class="btn btn-client-edit">Modifier mon profil</a>
         </div>
 
         <div class="row g-4 mb-4">
@@ -23,15 +23,24 @@
                     <div class="info-list">
                         <div>
                             <strong>Nom :</strong>
-                            {{ request.user.get_full_name|default:request.user.username }}
+                            {{ request.user.last_name|default:"Non renseigné" }}
+                        </div>
+                        <div>
+                            <strong>Prénom :</strong>
+                            {{ request.user.first_name|default:"Non renseigné" }}
                         </div>
                         <div>
                             <strong>Email :</strong>
                             {{ request.user.email|default:"Non renseigné" }}
                         </div>
-                        <div><strong>Téléphone :</strong> Non renseigné</div>
-                        <div><strong>Adresse :</strong> Non renseignée</div>
-                        <div><strong>Numéro client :</strong> En cours de création</div>
+                        <div>
+                            <strong>Téléphone :</strong>
+                            {{ profile.phone|default:"Non renseigné" }}
+                        </div>
+                        <div>
+                            <strong>Adresse :</strong>
+                            {{ profile.address|default:"Non renseignée" }}
+                        </div>
                     </div>
                 </div>
             </div>

@@ -62,3 +62,55 @@ class ClientAuthViewTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "accounts/espace_client.html")
+
+    def test_profile_redirects_anonymous_user_to_login(self):
+        login_url = reverse("login")
+        profile_url = reverse("accounts:profil")
+
+        response = self.client.get(profile_url)
+
+        self.assertRedirects(
+            response,
+            f"{login_url}?next={profile_url}",
+        )
+
+    def test_profile_is_accessible_for_authenticated_user(self):
+        user = User.objects.create_user(
+            username="clientprofile",
+            email="clientprofile@example.com",
+            password="VoitureBleue!7842",
+        )
+        self.client.force_login(user)
+
+        response = self.client.get(reverse("accounts:profil"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "accounts/profil.html")
+
+    def test_authenticated_user_can_update_profile(self):
+        user = User.objects.create_user(
+            username="clientupdate",
+            email="old@example.com",
+            password="VoitureBleue!7842",
+        )
+        self.client.force_login(user)
+
+        response = self.client.post(
+            reverse("accounts:profil"),
+            data={
+                "first_name": "Ysaeka",
+                "last_name": "Falletta",
+                "email": "ysaeka@example.com",
+                "phone": "0600000000",
+                "address": "10 rue du Test",
+            },
+        )
+
+        self.assertRedirects(response, reverse("accounts:profil"))
+
+        user.refresh_from_db()
+        self.assertEqual(user.first_name, "Ysaeka")
+        self.assertEqual(user.last_name, "Falletta")
+        self.assertEqual(user.email, "ysaeka@example.com")
+        self.assertEqual(user.client_profile.phone, "0600000000")
+        self.assertEqual(user.client_profile.address, "10 rue du Test")
