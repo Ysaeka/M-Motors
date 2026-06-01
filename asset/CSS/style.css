@@ -32,10 +32,17 @@ body {
 
 .hero {
   background:
-    linear-gradient(90deg, rgba(24, 31, 70, 0.95) 0%, rgba(54, 63, 110, 0.88) 55%, rgba(54, 63, 110, 0.25) 100%),
-    url("https://images.unsplash.com/photo-1494976388531-d1058494cdd8?auto=format&fit=crop&w=1600&q=80");
-  background-size: cover;
+    linear-gradient(
+      90deg,
+      rgba(24, 31, 70, 0.95) 0%,
+      rgba(54, 63, 110, 0.82) 48%,
+      rgba(54, 63, 110, 0.22) 100%
+    ),
+    url("../img/concession.png");
+  background-size: 75%;
+  background-repeat: no-repeat;
   background-position: center right;
+  background-color: #181f46;
   min-height: 350px;
   padding: 70px 0 120px;
   position: relative;
@@ -112,6 +119,9 @@ body {
   font-size: 1.15rem;
   font-weight: 700;
   border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .btn-search:hover {
@@ -2229,5 +2239,239 @@ textarea.finance-input {
   .admin-filter-select,
   .admin-filter-btn {
     width: 100%;
+  }
+}
+
+/* =========================
+   Home page improvements
+   ========================= */
+
+.hero-subtitle {
+  max-width: 720px;
+  color: #f4f6fb;
+  font-size: 1.05rem;
+  line-height: 1.7;
+  opacity: 0.95;
+}
+
+/* Sections générales */
+.home-section {
+  padding: 78px 0;
+  background: #f5f6fa;
+}
+
+.home-section-light {
+  background: #ffffff;
+}
+
+.section-heading {
+  max-width: 760px;
+  margin: 0 auto;
+}
+
+.section-label {
+  color: #10b981;
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  margin-bottom: 0.75rem;
+}
+
+.section-title {
+  color: #10b981;
+  font-size: clamp(1.7rem, 2.2vw, 2.25rem);
+  font-weight: 800;
+  line-height: 1.2;
+  margin-bottom: 1rem;
+}
+
+.section-text {
+  max-width: 680px;
+  margin: 0 auto;
+  color: #5f6b7a;
+  font-size: 1rem;
+  line-height: 1.7;
+}
+
+/* Choisissez la voiture */
+.choice-card {
+  display: block;
+  height: 100%;
+  padding: 28px;
+  background: #ffffff;
+  border-radius: 20px;
+  text-decoration: none;
+  color: #071653;
+  box-shadow: 0 14px 30px rgba(7, 22, 83, 0.08);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.choice-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 20px 40px rgba(7, 22, 83, 0.13);
+  color: #071653;
+}
+
+.choice-card i {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  margin-bottom: 20px;
+  border-radius: 16px;
+  background: rgba(16, 185, 129, 0.12);
+  color: #10b981;
+  font-size: 1.5rem;
+}
+
+.choice-card h3 {
+  color: #071653;
+  font-size: 1.25rem;
+  font-weight: 800;
+  margin-bottom: 0.65rem;
+}
+
+.choice-card p {
+  color: #5f6b7a;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  margin-bottom: 0;
+}
+
+/* Étapes avec image */
+.steps-section {
+  background: #ffffff;
+}
+
+.steps-feature {
+  max-width: 1180px;
+  margin-left: auto;
+  margin-right: auto;
+  display: grid;
+  grid-template-columns: 0.95fr 1.05fr;
+  gap: 32px;
+  align-items: stretch;
+}
+
+.steps-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+
+.step-mini-card {
+  min-height: 205px;
+  padding: 26px 24px;
+  background: #ffffff;
+  border: 1px solid rgba(7, 22, 83, 0.08);
+  border-radius: 18px;
+  box-shadow: 0 10px 26px rgba(7, 22, 83, 0.05);
+}
+
+.step-mini-card .step-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  margin-bottom: 18px;
+  border-radius: 12px;
+  background: rgba(16, 185, 129, 0.12);
+  color: #10b981;
+  font-size: 0.95rem;
+  font-weight: 800;
+}
+
+.step-mini-card h3 {
+  color: #071653;
+  font-size: 1.08rem;
+  font-weight: 800;
+  margin-bottom: 0.65rem;
+}
+
+.step-mini-card p {
+  color: #4f5d70;
+  font-size: 0.95rem;
+  line-height: 1.55;
+  margin-bottom: 0;
+}
+
+.steps-image-wrapper {
+  min-height: 430px;
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 14px 34px rgba(7, 22, 83, 0.1);
+}
+
+.steps-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 430px;
+  object-fit: cover;
+}
+
+/* FAQ */
+.faq-list {
+  max-width: 860px;
+  margin: 0 auto;
+}
+
+.faq-item {
+  background: #ffffff;
+  border-radius: 16px;
+  margin-bottom: 14px;
+  padding: 20px 24px;
+  box-shadow: 0 12px 28px rgba(7, 22, 83, 0.07);
+}
+
+.faq-item summary {
+  cursor: pointer;
+  color: #071653;
+  font-weight: 800;
+}
+
+.faq-item p {
+  color: #5f6b7a;
+  line-height: 1.6;
+  margin: 14px 0 0;
+}
+
+/* Responsive */
+@media (max-width: 992px) {
+  .steps-feature {
+    grid-template-columns: 1fr;
+  }
+
+  .steps-image-wrapper,
+  .steps-image {
+    min-height: 320px;
+  }
+}
+
+@media (max-width: 768px) {
+  .home-section {
+    padding: 60px 0;
+  }
+
+  .choice-card,
+  .step-mini-card {
+    padding: 24px;
+  }
+
+  .hero-subtitle {
+    font-size: 0.95rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .steps-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .step-mini-card {
+    min-height: auto;
   }
 }
