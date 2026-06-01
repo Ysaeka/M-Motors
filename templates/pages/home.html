@@ -38,40 +38,44 @@
           </li>
         </ul>
 
-        <div class="search-box" id="search-box">
+        <form action="{% url 'vehicle_list' %}" method="get" class="search-box" id="search-box">
+          <input type="hidden" name="offer_type" id="home-offer-type" value="lld">
+
           <div class="row g-4 align-items-center">
             <div class="col-lg-3">
-              <select class="form-select">
-                <option selected>Marque</option>
-                <option>BMW</option>
-                <option>Peugeot</option>
-                <option>Renault</option>
+              <select class="form-select" name="brand">
+                <option value="">Toutes les marques</option>
+                {% for brand in brands %}
+                  <option value="{{ brand }}">{{ brand }}</option>
+                {% endfor %}
               </select>
             </div>
 
             <div class="col-lg-3">
-              <select class="form-select">
-                <option selected>Modèle</option>
-                <option>208</option>
-                <option>Clio</option>
-                <option>Série 1</option>
+              <select class="form-select" name="category">
+                <option value="">Toutes les catégories</option>
+                {% for category in categories %}
+                  <option value="{{ category }}">{{ category }}</option>
+                {% endfor %}
               </select>
             </div>
 
             <div class="col-lg-3">
-              <select class="form-select" id="price-select">
-                <option selected>Mensualité</option>
-                <option>200 € / mois</option>
-                <option>300 € / mois</option>
-                <option>400 € / mois</option>
-              </select>
+            <select class="form-select" name="budget_max" id="price-select">
+              <option value="" selected>Mensualité</option>
+              <option value="200">200 € / mois</option>
+              <option value="300">300 € / mois</option>
+              <option value="400">400 € / mois</option>
+            </select>
             </div>
 
             <div class="col-lg-3">
-              <a href="/catalog/" class="btn btn-search w-100">Rechercher</a>
+              <button class="btn btn-search w-100" type="submit">
+                Rechercher
+              </button>
             </div>
           </div>
-        </div>
+        </form>
       </div>
     </div>
   </div>
