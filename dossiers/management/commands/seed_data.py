@@ -70,6 +70,7 @@ class Command(BaseCommand):
                 "model": "Clea",
                 "trim": "",
                 "category": "Citadine",
+                "image": "img/catalog_cars/renault_bleue1.PNG",
                 "year": 2020,
                 "mileage": 45000,
                 "fuel_type": Vehicle.FuelType.DIESEL,
@@ -86,6 +87,7 @@ class Command(BaseCommand):
                 "model": "Captor",
                 "trim": "",
                 "category": "SUV",
+                "image": "img/catalog_cars/renault_orange1.PNG",
                 "year": 2019,
                 "mileage": 52000,
                 "fuel_type": Vehicle.FuelType.GASOLINE,
@@ -102,6 +104,7 @@ class Command(BaseCommand):
                 "model": "Megan",
                 "trim": "",
                 "category": "Berline",
+                "image": "img/catalog_cars/renault_gris1.PNG",
                 "year": 2020,
                 "mileage": 68000,
                 "fuel_type": Vehicle.FuelType.DIESEL,
@@ -118,6 +121,7 @@ class Command(BaseCommand):
                 "model": "228",
                 "trim": "",
                 "category": "Citadine",
+                "image": "img/catalog_cars/peugeot_bleue1.PNG",
                 "year": 2021,
                 "mileage": 39000,
                 "fuel_type": Vehicle.FuelType.GASOLINE,
@@ -134,6 +138,7 @@ class Command(BaseCommand):
                 "model": "318",
                 "trim": "",
                 "category": "Berline",
+                "image": "img/catalog_cars/peugeot_grise1.PNG",
                 "year": 2020,
                 "mileage": 16500,
                 "fuel_type": Vehicle.FuelType.HYBRID,
@@ -150,6 +155,7 @@ class Command(BaseCommand):
                 "model": "3009",
                 "trim": "",
                 "category": "SUV",
+                "image": "img/catalog_cars/peugeot_souris1.PNG",
                 "year": 2020,
                 "mileage": 63000,
                 "fuel_type": Vehicle.FuelType.DIESEL,
@@ -166,6 +172,7 @@ class Command(BaseCommand):
                 "model": "Fiesto",
                 "trim": "",
                 "category": "Citadine",
+                "image": "img/catalog_cars/Ford_orange.png",
                 "year": 2019,
                 "mileage": 47000,
                 "fuel_type": Vehicle.FuelType.GASOLINE,
@@ -182,6 +189,7 @@ class Command(BaseCommand):
                 "model": "Focal",
                 "trim": "",
                 "category": "Berline",
+                "image": "img/catalog_cars/Ford_blanche1.png",
                 "year": 2020,
                 "mileage": 54000,
                 "fuel_type": Vehicle.FuelType.DIESEL,
@@ -198,6 +206,7 @@ class Command(BaseCommand):
                 "model": "Kaga",
                 "trim": "",
                 "category": "SUV",
+                "image": "img/catalog_cars/Ford_noire_break1.png",
                 "year": 2021,
                 "mileage": 66000,
                 "fuel_type": Vehicle.FuelType.ELECTRIC,
@@ -214,6 +223,7 @@ class Command(BaseCommand):
                 "model": "Yolo",
                 "trim": "",
                 "category": "Citadine",
+                "image": "img/catalog_cars/toyota_rouge1.png",
                 "year": 2021,
                 "mileage": 16800,
                 "fuel_type": Vehicle.FuelType.GASOLINE,
@@ -230,6 +240,7 @@ class Command(BaseCommand):
                 "model": "Coriolis",
                 "trim": "",
                 "category": "Berline",
+                "image": "img/catalog_cars/toyota_blanche1.png",
                 "year": 2020,
                 "mileage": 49000,
                 "fuel_type": Vehicle.FuelType.HYBRID,
@@ -246,6 +257,7 @@ class Command(BaseCommand):
                 "model": "C-MP",
                 "trim": "",
                 "category": "SUV",
+                "image": "img/catalog_cars/toyota_bleue_break1.png",
                 "year": 2021,
                 "mileage": 43000,
                 "fuel_type": Vehicle.FuelType.ELECTRIC,
@@ -262,6 +274,7 @@ class Command(BaseCommand):
                 "model": "Clio",
                 "trim": "Business",
                 "category": "Citadine",
+                "image": "img/catalog_cars/renault_bleue1.PNG",
                 "year": 2022,
                 "mileage": 18000,
                 "fuel_type": Vehicle.FuelType.HYBRID,
@@ -278,6 +291,7 @@ class Command(BaseCommand):
                 "model": "Scenic",
                 "trim": "Business",
                 "category": "Familiale",
+                "image": "img/catalog_cars/renault_orange2.png",
                 "year": 2021,
                 "mileage": 52000,
                 "fuel_type": Vehicle.FuelType.DIESEL,
@@ -294,6 +308,7 @@ class Command(BaseCommand):
                 "model": "5008",
                 "trim": "Allure",
                 "category": "Familiale",
+                "image": "img/catalog_cars/peugeot_grise2.png",
                 "year": 2020,
                 "mileage": 61000,
                 "fuel_type": Vehicle.FuelType.DIESEL,
@@ -310,6 +325,7 @@ class Command(BaseCommand):
                 "model": "C4 Picasso",
                 "trim": "Feel",
                 "category": "Familiale",
+                "image": "img/catalog_cars/citroen_bleue1.png",
                 "year": 2019,
                 "mileage": 74000,
                 "fuel_type": Vehicle.FuelType.GASOLINE,
@@ -324,10 +340,16 @@ class Command(BaseCommand):
 
         seed_vehicle = None
         for vehicle_data in vehicles_data:
-            vehicle, _ = Vehicle.objects.get_or_create(
+            vehicle, created = Vehicle.objects.get_or_create(
                 reference=vehicle_data["reference"],
                 defaults=vehicle_data,
             )
+
+            if not created:
+                for field, value in vehicle_data.items():
+                    setattr(vehicle, field, value)
+                vehicle.save()
+
             if vehicle.reference == "MM-SEED-001":
                 seed_vehicle = vehicle
 

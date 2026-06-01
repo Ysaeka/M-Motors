@@ -50,14 +50,28 @@ def vehicle_list(request):
 
     try:
         budget_value = float(budget_max)
+
+        if budget_value < budget_min or budget_value > budget_max_limit:
+            budget_value = default_budget
+            budget_max = str(default_budget)
+
         if offer_type == Vehicle.OfferType.LLD:
             vehicles = vehicles.filter(price_monthly__lte=budget_value)
         elif offer_type == Vehicle.OfferType.SALE:
             vehicles = vehicles.filter(price_sale__lte=budget_value)
+
     except ValueError:
+        budget_value = default_budget
         budget_max = str(default_budget)
 
     brands = Vehicle.objects.values_list("brand", flat=True).distinct().order_by("brand")
+
+    categories = (
+    Vehicle.objects.exclude(category="")
+    .values_list("category", flat=True)
+    .distinct()
+    .order_by("category")
+    )
 
     paginator = Paginator(vehicles, 6)
     page_number = request.GET.get("page")
@@ -70,6 +84,7 @@ def vehicle_list(request):
             "vehicles": page_obj,
             "page_obj": page_obj,
             "brands": brands,
+            "categories": categories,
             "selected_offer_type": offer_type,
             "selected_budget_max": budget_max,
             "selected_brand": brand,

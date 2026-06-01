@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load humanize %}
 {% load static %}
 
 {% block title %}Catalogue - M Motors{% endblock %}
@@ -15,11 +16,11 @@
     <div class="row g-4">
 
       <aside class="col-lg-3">
-        <form method="get" class="filter-box">
+        <form method="get" class="filter-box" id="catalog-filter-form">
           <h2 class="filter-title">Filtres</h2>
 
           <div class="filter-group">
-            <label for="offer_type" class="form-label">Mode</label>
+            <label for="offer_type" class="form-label">Type d'offre</label>
             <select name="offer_type" id="offer_type" class="form-select">
               <option value="">Tous</option>
               <option value="sale" {% if selected_offer_type == "sale" %}selected{% endif %}>Achat</option>
@@ -52,6 +53,19 @@
               {% for brand in brands %}
                 <option value="{{ brand }}" {% if selected_brand == brand %}selected{% endif %}>
                   {{ brand }}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="filter-group">
+            <label for="category" class="form-label">Catégorie</label>
+            <select name="category" id="category" class="form-select">
+              <option value="">Toutes les catégories</option>
+
+              {% for category in categories %}
+                <option value="{{ category }}" {% if selected_category == category %}selected{% endif %}>
+                  {{ category }}
                 </option>
               {% endfor %}
             </select>
@@ -101,7 +115,8 @@
             </div>
           </div>
 
-          <button type="submit" class="btn btn-search w-100">Filtrer</button>
+          <a href="{% url 'vehicle_list' %}" class="btn btn-outline-secondary w-100"><i class="bi bi-arrow-counterclockwise me-2"></i>Réinitialiser les filtres </a>
+          
         </form>
       </aside>
 
@@ -118,15 +133,25 @@
             {% for vehicle in vehicles %}
               <article class="vehicle-list-card card border-0 shadow-sm">
                 <div class="row g-0">
-                  <div class="col-md-4">
-                    <img
-                      src="{% static 'img/concession.png' %}"
-                      alt="{{ vehicle.brand }} {{ vehicle.model }}"
-                      class="vehicle-list-image img-fluid h-100 w-100"
-                    />
-                  </div>
+                    <div class="col-md-3">
+                        <div class="vehicle-list-image-wrapper h-100">
+                            {% if vehicle.image %}
+                            <img
+                                src="{% static vehicle.image %}"
+                                alt="{{ vehicle.brand }} {{ vehicle.model }}"
+                                class="vehicle-list-image"
+                            />
+                            {% else %}
+                            <img
+                                src="{% static 'img/concession.png' %}"
+                                alt="{{ vehicle.brand }} {{ vehicle.model }}"
+                                class="vehicle-list-image"
+                            />
+                            {% endif %}
+                        </div>
+                    </div>
 
-                  <div class="col-md-8">
+                  <div class="col-md-9">
                     <div class="card-body p-4">
                       <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-3">
                         <div>
@@ -137,35 +162,46 @@
                           <h3 class="vehicle-list-title mt-2 mb-1">
                             {{ vehicle.brand }} {{ vehicle.model }} {{ vehicle.year }}
                           </h3>
-
-                          <p class="vehicle-list-meta mb-0">
-                            {{ vehicle.get_fuel_type_display }} • {{ vehicle.get_gearbox_display }}
-                          </p>
                         </div>
 
                         <div class="text-md-end">
                           {% if vehicle.price_sale %}
-                            <p class="vehicle-price mb-1">{{ vehicle.price_sale }} €</p>
+                            <p class="vehicle-price mb-1">{{ vehicle.price_sale|floatformat:0|intcomma }} €</p>
                           {% endif %}
 
                           {% if vehicle.price_monthly %}
-                            <p class="vehicle-rent mb-0">ou {{ vehicle.price_monthly }} €/mois</p>
+                            <p class="vehicle-rent mb-0">ou {{ vehicle.price_monthly|floatformat:0|intcomma }} €/mois</p>
                           {% endif %}
                         </div>
-                      </div>
+                        </div>
+                        
+                        <div class="vehicle-list-text mb-3">
+                            {% if request.user.is_staff %}
+                                <p class="mb-2">Référence : {{ vehicle.reference }}</p>
+                            {% endif %}
+                        </div>
 
-                      <p class="vehicle-list-text mb-3">
-                        {% if request.user.is_staff %}
-                          Référence : {{ vehicle.reference }}<br>
-                        {% endif %}
-                        Offre : {{ vehicle.get_offer_type_display }}
-                      </p>
+                        <div class="vehicle-card-footer">
+                            <div class="vehicle-tags">
+                                {% if vehicle.category %}
+                                <span class="vehicle-tag vehicle-tag-category vehicle-tag-category-{{ vehicle.category|slugify }}">
+                                    {{ vehicle.category }}
+                                </span>
+                                {% endif %}
 
-                      <div class="d-flex justify-content-end">
-                        <a href="{% url 'vehicle_detail' vehicle.pk %}" class="btn btn-detail">
-                          Voir le détail
-                        </a>
-                      </div>
+                                <span class="vehicle-tag vehicle-tag-fuel-{{ vehicle.fuel_type }}">
+                                {{ vehicle.get_fuel_type_display }}
+                                </span>
+
+                                <span class="vehicle-tag vehicle-tag-gearbox-{{ vehicle.gearbox }}">
+                                {{ vehicle.get_gearbox_display }}
+                                </span>
+                            </div>
+
+                            <a href="{% url 'vehicle_detail' vehicle.pk %}" class="btn btn-detail">
+                                Voir le détail
+                            </a>
+                        </div>
                     </div>
                   </div>
                 </div>

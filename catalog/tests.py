@@ -63,17 +63,18 @@ class CatalogViewsTests(TestCase):
 
     def test_vehicle_list_filter_by_offer_type_sale(self):
         response = self.client.get(reverse("vehicle_list"), {"offer_type": "sale"})
+
         self.assertContains(response, "Peugeot 208 2021")
-        self.assertContains(response, "Offre : Achat")
+        self.assertContains(response, "14&nbsp;990 €", html=True)
         self.assertNotContains(response, "Renault Clio 2022")
-        self.assertNotContains(response, "Offre : Location")
 
     def test_vehicle_list_filter_by_offer_type_lld(self):
         response = self.client.get(reverse("vehicle_list"), {"offer_type": "lld"})
+
         self.assertContains(response, "Renault Clio 2022")
-        self.assertContains(response, "Offre : Location")
+        self.assertContains(response, "299 €/mois")
         self.assertNotContains(response, "Peugeot 208 2021")
-        self.assertNotContains(response, "Offre : Achat")
+
 
     def test_vehicle_references_are_hidden_for_public_users(self):
         response = self.client.get(reverse("vehicle_list"))

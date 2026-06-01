@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load humanize %}
 {% load static %}
 
 {% block title %}{{ vehicle.brand }} {{ vehicle.model }} - M Motors{% endblock %}
@@ -47,38 +48,50 @@
           </button>
         </div>
 
-        <div class="vehicle-detail-image-wrapper mb-4">
-          <img
-            src="{% static 'img/concession.png' %}"
-            alt="{{ vehicle.brand }} {{ vehicle.model }}"
-            class="vehicle-detail-image img-fluid w-100"
-          />
-        </div>
-
-        <div class="row g-4 mb-4">
-          {% if vehicle.price_sale %}
-            <div class="col-md-4">
-              <div class="price-box h-100">
-                <p class="price-label mb-2">Prix d’achat</p>
-                <p class="price-value mb-0">{{ vehicle.price_sale }} €</p>
-              </div>
+        <div class="vehicle-detail-main row g-4 align-items-stretch mb-4">
+          <div class="col-lg-7">
+            <div class="vehicle-detail-image-wrapper h-100">
+              {% if vehicle.image %}
+                <img
+                  src="{% static vehicle.image %}"
+                  alt="{{ vehicle.brand }} {{ vehicle.model }}"
+                  class="vehicle-detail-image img-fluid"
+                />
+              {% else %}
+                <img
+                  src="{% static 'img/concession.png' %}"
+                  alt="{{ vehicle.brand }} {{ vehicle.model }}"
+                  class="vehicle-detail-image img-fluid"
+                />
+              {% endif %}
             </div>
-          {% endif %}
+          </div>
 
-          {% if vehicle.price_monthly %}
-            <div class="col-md-4">
-              <div class="price-box h-100">
-                <p class="price-label mb-2">Location longue durée</p>
-                <p class="rent-value mb-0">{{ vehicle.price_monthly }} € <span>/ mois</span></p>
+          <div class="col-lg-5">
+            <div class="vehicle-detail-side h-100">
+              {% if vehicle.price_sale %}
+                <div class="price-box">
+                  <p class="price-label mb-2">Prix d’achat</p>
+                  <p class="price-value mb-0">
+                    {{ vehicle.price_sale|floatformat:0|intcomma }} €
+                  </p>
+                </div>
+              {% endif %}
+
+              {% if vehicle.price_monthly %}
+                <div class="price-box">
+                  <p class="price-label mb-2">Location longue durée</p>
+                  <p class="rent-value mb-0">
+                    {{ vehicle.price_monthly|floatformat:0|intcomma }} € <span>/ mois</span>
+                  </p>
+                </div>
+              {% endif %}
+
+              <div class="price-box">
+                <p class="price-label mb-2">Type d’offre</p>
+                <p class="rent-value mb-0">{{ vehicle.get_offer_type_display }}</p>
+                <small class="text-muted">Selon disponibilité du véhicule</small>
               </div>
-            </div>
-          {% endif %}
-
-          <div class="col-md-4">
-            <div class="price-box h-100">
-              <p class="price-label mb-2">Type d’offre</p>
-              <p class="rent-value mb-0">{{ vehicle.get_offer_type_display }}</p>
-              <small class="text-muted">Selon disponibilité du véhicule</small>
             </div>
           </div>
         </div>
