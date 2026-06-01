@@ -12,12 +12,19 @@ def vehicle_list(request):
     brand = request.GET.get("brand")
     fuel_types = request.GET.getlist("fuel_type")
     gearboxes = request.GET.getlist("gearbox")
+    category = request.GET.get("category")
 
     if offer_type in [Vehicle.OfferType.SALE, Vehicle.OfferType.LLD]:
         vehicles = vehicles.filter(offer_type=offer_type)
 
     if brand:
         vehicles = vehicles.filter(brand=brand)
+    
+    if brand:
+        vehicles = vehicles.filter(brand=brand)
+
+    if category:
+        vehicles = vehicles.filter(category=category)
 
     if fuel_types:
         vehicles = vehicles.filter(fuel_type__in=fuel_types)
@@ -66,6 +73,7 @@ def vehicle_list(request):
             "selected_offer_type": offer_type,
             "selected_budget_max": budget_max,
             "selected_brand": brand,
+            "selected_category": category,
             "selected_fuel_types": fuel_types,
             "selected_gearboxes": gearboxes,
             "budget_label": budget_label,

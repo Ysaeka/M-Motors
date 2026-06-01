@@ -32,16 +32,42 @@
           <a href="/catalog/" class="nav-link-custom">Catalogue</a>
           <a href="/contact/" class="nav-link-custom">Contact</a>
           {% if user.is_authenticated %}
-            <a href="{% url 'accounts:espace_client' %}" class="btn btn-client ms-lg-4">
-              Mon espace
-            </a>
-
-            <form method="post" action="{% url 'logout' %}" class="d-inline ms-lg-2">
-              {% csrf_token %}
-              <button type="submit" class="btn btn outline-secondary">
-                Déconnexion
+            <div class="dropdown ms-lg-4">
+              <button
+                class="btn btn-client dropdown-toggle"
+                type="button"
+                id="clientMenu"
+                data-bs-toggle="dropdown"
+                aria-expanded="false"
+              >
+                {{ request.user.get_full_name|default:request.user.username }}
               </button>
-            </form>
+
+              <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="clientMenu">
+                <li>
+                  <h6 class="dropdown-header">Espace client</h6>
+                </li>
+                <li>
+                  <a class="dropdown-item" href="{% url 'accounts:espace_client' %}">
+                    Mon espace client
+                  </a>
+                </li>
+                <li>
+                  <a class="dropdown-item" href="#">
+                    Modifier mon profil
+                  </a>
+                </li>
+                <li><hr class="dropdown-divider"></li>
+                <li>
+                  <form method="post" action="{% url 'logout' %}">
+                    {% csrf_token %}
+                    <button type="submit" class="dropdown-item text-danger">
+                      Déconnexion
+                    </button>
+                  </form>
+                </li>
+              </ul>
+            </div>
           {% else %}
             <a href="{% url 'login' %}" class="btn btn-client ms-lg-4">
               Espace client
