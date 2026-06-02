@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% load static humanize %}
+
+{% block title %}Dossier #{{ dossier.id }} - M Motors{% endblock %}
+
+{% block content %}
+<section class="py-5">
+  <div class="container-fluid px-4 px-lg-5">
+    <div class="mb-4">
+      <a href="{% url 'accounts:espace_client' %}" class="btn btn-back">
+        ← Retour à mon espace client
+      </a>
+    </div>
+
+    <article class="card border-0 shadow-sm vehicle-detail-card">
+      <div class="card-body p-4 p-lg-5">
+        <span class="vehicle-badge">
+          {{ dossier.get_status_display }}
+        </span>
+
+        <h1 class="vehicle-detail-title mt-3 mb-2">
+          Dossier #{{ dossier.id }}
+        </h1>
+
+        <p class="vehicle-list-text mb-4">
+          Demande : {{ dossier.get_application_type_display }}<br>
+          Créée le {{ dossier.created_at|date:"d/m/Y à H:i" }}
+        </p>
+
+        <h2 class="vehicle-list-title mb-3">
+          {{ dossier.vehicle.brand }} {{ dossier.vehicle.model }} {{ dossier.vehicle.year }}
+        </h2>
+
+        <div class="alert alert-light border mb-0">
+          Votre demande est enregistrée en brouillon. Cliquez sur “Compléter mon dossier et le soumettre” pour poursuivre votre dossier de financement.
+        </div>
+            {% if dossier.status == "draft" %}
+                <div class="d-flex flex-column flex-md-row gap-3 mt-4">
+                    <form method="post" action="{% url 'submit_dossier' dossier.pk %}" class="flex-fill">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-detail w-100">
+                        Compléter mon dossier et le soumettre
+                    </button>
+                    </form>
+
+                    <form method="post" action="{% url 'delete_dossier' dossier.pk %}" class="flex-fill">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-outline-danger w-100">
+                        Supprimer ce brouillon
+                    </button>
+                    </form>
+                </div>
+            {% endif %}
+      </div>
+    </article>
+  </div>
+</section>
+{% endblock %}

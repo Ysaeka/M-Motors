@@ -177,10 +177,24 @@
         </div>
 
         <div class="vehicle-detail-actions d-flex flex-column flex-md-row gap-3">
-          <a href="#" class="btn btn-secondary-detail flex-fill">Réserver ce véhicule</a>
-          <a href="#" class="btn btn-detail flex-fill">Déposer un dossier</a>
-        </div>
+          {% if vehicle.offer_type == "sale" or vehicle.offer_type == "both" %}
+            <a
+              href="{% url 'start_dossier' vehicle.pk 'sale' %}"
+              class="btn btn-secondary-detail flex-fill"
+            >
+              Acheter ce véhicule
+            </a>
+          {% endif %}
 
+          {% if vehicle.offer_type == "lld" or vehicle.offer_type == "both" %}
+            <a
+              href="{% url 'start_dossier' vehicle.pk 'lld' %}"
+              class="btn btn-detail flex-fill"
+            >
+              Louer ce véhicule
+            </a>
+          {% endif %}
+        </div>
       </div>
     </div>
   </div>

@@ -1,4 +1,5 @@
  {% extends "base.html" %}
+ {% load static humanize %}
 
 {% block content %}
 
@@ -70,43 +71,70 @@
         </div>
 
         <div class="dashboard-card">
-        <h2 class="dashboard-card-title">Mes demandes de financement en cours</h2>
+            <h2 class="dashboard-card-title">Mes demandes de financement en cours</h2>
 
-        <div class="finance-request-card">
-            <div class="finance-car">
-            <img src="https://images.unsplash.com/photo-1552519507-da3b142c6e3d?auto=format&fit=crop&w=600&q=80" alt="Ford Mustang" class="finance-car-image">
-            </div>
+            {% if dossiers %}
+                {% for dossier in dossiers %}
+                <div class="finance-request-card">
+                    <div class="finance-car">
+                    {% if dossier.vehicle.image %}
+                        <img
+                        src="{% static dossier.vehicle.image %}"
+                        alt="{{ dossier.vehicle.brand }} {{ dossier.vehicle.model }}"
+                        class="finance-car-image"
+                        >
+                    {% else %}
+                        <img
+                        src="{% static 'img/concession.png' %}"
+                        alt="{{ dossier.vehicle.brand }} {{ dossier.vehicle.model }}"
+                        class="finance-car-image"
+                        >
+                    {% endif %}
+                    </div>
 
-            <div class="finance-content">
-            <h3 class="finance-title">Ford Mustang GT</h3>
-            <p class="finance-meta">Location longue durée • 489 €/mois</p>
-            <p class="finance-date">Dossier déposé le 10/03/2026</p>
-            </div>
+                    <div class="finance-content">
+                    <h3 class="finance-title">
+                        {{ dossier.vehicle.brand }} {{ dossier.vehicle.model }}
+                    </h3>
 
-            <div class="finance-status-block">
-            <span class="status-badge status-pending">En cours d’analyse</span>
-            <a href="#" class="btn btn-finance-detail">Voir le dossier</a>
-            </div>
+                    {% if dossier.application_type == "lld" %}
+                        <p class="finance-meta">
+                        Location longue durée
+                        {% if dossier.vehicle.price_monthly %}
+                            • {{ dossier.vehicle.price_monthly|floatformat:0|intcomma }} €/mois
+                        {% endif %}
+                        </p>
+                    {% else %}
+                        <p class="finance-meta">
+                        Achat
+                        {% if dossier.vehicle.price_sale %}
+                            • {{ dossier.vehicle.price_sale|floatformat:0|intcomma }} €
+                        {% endif %}
+                        </p>
+                    {% endif %}
+
+                    <p class="finance-date">
+                        Dossier créé le {{ dossier.created_at|date:"d/m/Y" }}
+                    </p>
+                    </div>
+
+                    <div class="finance-status-block">
+                    <span class="status-badge status-pending">
+                        {{ dossier.get_status_display }}
+                    </span>
+
+                    <a href="{% url 'dossier_detail' dossier.pk %}" class="btn btn-finance-detail">
+                        Voir le dossier
+                    </a>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="alert alert-light border mb-0">
+                Vous n’avez pas encore de demande en cours.
+                </div>
+            {% endif %}
         </div>
-
-        <div class="finance-request-card">
-            <div class="finance-car">
-            <img src="https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=600&q=80" alt="Peugeot 3008" class="finance-car-image">
-            </div>
-
-            <div class="finance-content">
-            <h3 class="finance-title">Peugeot 3008</h3>
-            <p class="finance-meta">Achat • 21 900 €</p>
-            <p class="finance-date">Dossier déposé le 06/03/2026</p>
-            </div>
-
-            <div class="finance-status-block">
-            <span class="status-badge status-missing">Documents manquants</span>
-            <a href="#" class="btn btn-finance-detail">Compléter</a>
-            </div>
-        </div>
-        </div>
-
     </div>
 </section>
 {% endblock %}
