@@ -1,5 +1,6 @@
 from django.contrib import messages
 from django.contrib.auth import login
+from dossiers.models import Dossier
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
 
@@ -11,7 +12,21 @@ from .forms import ClientProfileForm, ClientSignUpForm
 @login_required
 def espace_client(request):
     profile, _ = ClientProfile.objects.get_or_create(user=request.user)
-    return render(request, "accounts/espace_client.html", {"profile": profile})
+
+    dossiers = (
+        Dossier.objects.filter(customer=request.user)
+        .select_related("vehicle")
+        .order_by("-created_at")
+    )
+
+    return render(
+        request,
+        "accounts/espace_client.html",
+        {
+            "profile": profile,
+            "dossiers": dossiers,
+        },
+    )
 
 @login_required
 def profil(request):
