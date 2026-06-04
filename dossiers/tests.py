@@ -1,10 +1,11 @@
 from django.contrib.auth import get_user_model
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from django.urls import reverse
 
 from catalog.models import Vehicle
 
-from .models import Dossier
+from .models import Document, Dossier
 
 
 class DossierRequestTests(TestCase):
@@ -138,3 +139,139 @@ class DossierRequestTests(TestCase):
         response = self.client.get(reverse("dossier_detail", args=[dossier.pk]))
 
         self.assertEqual(response.status_code, 404)
+
+    def test_user_can_access_own_document(self):
+        self.client.login(username="clienttest", password="Testpass123!")
+
+        dossier = Dossier.objects.create(
+            customer=self.user,
+            vehicle=self.vehicle,
+            application_type=Dossier.ApplicationType.SALE,
+            status=Dossier.Status.DRAFT,
+        )
+
+        uploaded_file = SimpleUploadedFile(
+            "identity.pdf",
+            b"fake pdf content",
+            content_type="application/pdf",
+        )
+
+        document = Document.objects.create(
+            dossier=dossier,
+            document_type=Document.DocumentType.ID_CARD,
+            file=uploaded_file,
+        )
+
+        response = self.client.get(reverse("document_download", args=[document.pk]))
+
+        self.assertEqual(response.status_code, 200)
+
+    def test_user_cannot_access_another_user_document(self):
+        User = get_user_model()
+        other_user = User.objects.create_user(
+            username="otherclientdoc",
+            email="otherdoc@example.com",
+            password="Testpass123!",
+        )
+
+        dossier = Dossier.objects.create(
+            customer=other_user,
+            vehicle=self.vehicle,
+            application_type=Dossier.ApplicationType.SALE,
+            status=Dossier.Status.DRAFT,
+        )
+
+        uploaded_file = SimpleUploadedFile(
+            "identity.pdf",
+            b"fake pdf content",
+            content_type="application/pdf",
+        )
+
+        document = Document.objects.create(
+            dossier=dossier,
+            document_type=Document.DocumentType.ID_CARD,
+            file=uploaded_file,
+        )
+
+        self.client.login(username="clienttest", password="Testpass123!")
+
+        response = self.client.get(reverse("document_download", args=[document.pk]))
+
+        self.assertEqual(response.status_code, 404)
+
+    def test_user_can_upload_valid_document(self):
+        self.client.login(username="clienttest", password="Testpass123!")
+
+        dossier = Dossier.objects.create(
+            customer=self.user,
+            vehicle=self.vehicle,
+            application_type=Dossier.ApplicationType.SALE,
+            status=Dossier.Status.DRAFT,
+            birth_date="1990-01-01",
+            address="12 rue de test",
+            postal_code="75000",
+            city="Paris",
+            data_processing_consent=True,
+        )
+
+        uploaded_file = SimpleUploadedFile(
+            "identity.pdf",
+            b"fake pdf content",
+            content_type="application/pdf",
+        )
+
+        response = self.client.post(
+            reverse("complete_dossier", args=[dossier.pk]),
+            {
+                "action": "upload_document",
+                "document_type": Document.DocumentType.ID_CARD,
+                "file": uploaded_file,
+            },
+        )
+
+        self.assertRedirects(response, reverse("complete_dossier", args=[dossier.pk]))
+        self.assertTrue(
+            Document.objects.filter(
+                dossier=dossier,
+                document_type=Document.DocumentType.ID_CARD,
+            ).exists()
+        )
+
+    def test_user_cannot_upload_invalid_document_type(self):
+        self.client.login(username="clienttest", password="Testpass123!")
+
+        dossier = Dossier.objects.create(
+            customer=self.user,
+            vehicle=self.vehicle,
+            application_type=Dossier.ApplicationType.SALE,
+            status=Dossier.Status.DRAFT,
+            birth_date="1990-01-01",
+            address="12 rue de test",
+            postal_code="75000",
+            city="Paris",
+            data_processing_consent=True,
+        )
+
+        uploaded_file = SimpleUploadedFile(
+            "identity.txt",
+            b"invalid text content",
+            content_type="text/plain",
+        )
+
+        response = self.client.post(
+            reverse("complete_dossier", args=[dossier.pk]),
+            {
+                "action": "upload_document",
+                "document_type": Document.DocumentType.ID_CARD,
+                "file": uploaded_file,
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(
+            Document.objects.filter(
+                dossier=dossier,
+                document_type=Document.DocumentType.ID_CARD,
+            ).exists()
+        )
+        self.assertContains(response, "Format non autorisé")

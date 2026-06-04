@@ -31,26 +31,29 @@
           {{ dossier.vehicle.brand }} {{ dossier.vehicle.model }} {{ dossier.vehicle.year }}
         </h2>
 
-        <div class="alert alert-light border mb-0">
-          Votre demande est enregistrée en brouillon. Cliquez sur “Compléter mon dossier et le soumettre” pour poursuivre votre dossier de financement.
-        </div>
-            {% if dossier.status == "draft" %}
-                <div class="d-flex flex-column flex-md-row gap-3 mt-4">
-                    <form method="post" action="{% url 'submit_dossier' dossier.pk %}" class="flex-fill">
-                    {% csrf_token %}
-                    <button type="submit" class="btn btn-detail w-100">
-                        Compléter mon dossier et le soumettre
-                    </button>
-                    </form>
+        {% if dossier.status == "draft" %}
+          <div class="alert alert-light border mb-0">
+            Votre demande est enregistrée en brouillon. Cliquez sur “Compléter mon dossier”
+            pour ajouter vos justificatifs et finaliser votre demande de financement.
+          </div>
 
-                    <form method="post" action="{% url 'delete_dossier' dossier.pk %}" class="flex-fill">
-                    {% csrf_token %}
-                    <button type="submit" class="btn btn-outline-danger w-100">
-                        Supprimer ce brouillon
-                    </button>
-                    </form>
-                </div>
-            {% endif %}
+          <div class="d-flex flex-column flex-md-row gap-3 mt-4">
+            <a href="{% url 'complete_dossier' dossier.pk %}" class="btn btn-detail flex-fill">
+              Compléter mon dossier
+            </a>
+
+            <form method="post" action="{% url 'delete_dossier' dossier.pk %}" class="flex-fill">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-outline-danger w-100">
+                Supprimer ce brouillon
+              </button>
+            </form>
+          </div>
+        {% else %}
+          <div class="alert alert-light border mb-0">
+            Votre dossier a été soumis. Vous pouvez suivre son avancement depuis votre espace client.
+          </div>
+        {% endif %}
       </div>
     </article>
   </div>
