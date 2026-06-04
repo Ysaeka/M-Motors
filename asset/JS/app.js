@@ -80,4 +80,61 @@ document.addEventListener("DOMContentLoaded", function () {
       });
     }
   }
+    /*
+   * Dossier completion form
+   * Show credit amount only when user has current credit
+   */
+  const creditRadios = document.querySelectorAll(
+    "input[name='has_current_credit']"
+  );
+  const monthlyCreditWrapper = document.getElementById(
+    "monthly-credit-wrapper"
+  );
+
+  function toggleMonthlyCreditField() {
+    if (!monthlyCreditWrapper || creditRadios.length === 0) {
+      return;
+    }
+
+    const selectedCreditOption = document.querySelector(
+      "input[name='has_current_credit']:checked"
+    );
+
+    if (selectedCreditOption && selectedCreditOption.value === "True") {
+      monthlyCreditWrapper.classList.remove("d-none");
+    } else {
+      monthlyCreditWrapper.classList.add("d-none");
+    }
+  }
+
+  creditRadios.forEach(function (radio) {
+    radio.addEventListener("change", toggleMonthlyCreditField);
+  });
+
+  toggleMonthlyCreditField();
+
+    /*
+   * Dossier completion form
+   * Show rent amount only when user is tenant
+   */
+  const housingStatusSelect = document.getElementById("id_housing_status");
+  const monthlyRentWrapper = document.getElementById("monthly-rent-wrapper");
+
+  function toggleMonthlyRentField() {
+    if (!housingStatusSelect || !monthlyRentWrapper) {
+      return;
+    }
+
+    if (housingStatusSelect.value === "tenant") {
+      monthlyRentWrapper.classList.remove("d-none");
+    } else {
+      monthlyRentWrapper.classList.add("d-none");
+    }
+  }
+
+  if (housingStatusSelect) {
+    housingStatusSelect.addEventListener("change", toggleMonthlyRentField);
+  }
+
+  toggleMonthlyRentField();
 });

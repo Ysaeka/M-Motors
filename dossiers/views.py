@@ -1,10 +1,15 @@
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
+from django.http import FileResponse
+
+from accounts.models import ClientProfile
+
+from .forms import DocumentUploadForm, DossierCompletionForm
 
 from catalog.models import Vehicle
 
-from .models import Dossier, DossierStatusHistory
+from .models import Document, Dossier, DossierStatusHistory
 
 
 ACTIVE_DOSSIER_STATUSES = [
@@ -12,7 +17,21 @@ ACTIVE_DOSSIER_STATUSES = [
     Dossier.Status.SUBMITTED,
     Dossier.Status.UNDER_REVIEW,
 ]
-
+REQUIRED_DOCUMENTS_BY_APPLICATION_TYPE = {
+    Dossier.ApplicationType.SALE: [
+        Document.DocumentType.ID_CARD,
+        Document.DocumentType.DRIVER_LICENSE,
+        Document.DocumentType.PROOF_OF_ADDRESS,
+    ],
+    Dossier.ApplicationType.LLD: [
+        Document.DocumentType.ID_CARD,
+        Document.DocumentType.DRIVER_LICENSE,
+        Document.DocumentType.PROOF_OF_ADDRESS,
+        Document.DocumentType.PROOF_OF_INCOME,
+        Document.DocumentType.TAX_NOTICE,
+        Document.DocumentType.RENT_RECEIPT,
+    ],
+}
 
 @login_required
 def dossier_list(request):
@@ -102,6 +121,134 @@ def start_dossier(request, vehicle_pk, application_type):
         )
 
     return redirect("dossier_detail", pk=dossier.pk)
+
+@login_required
+def complete_dossier(request, pk):
+    dossier = get_object_or_404(
+        Dossier.objects.select_related("vehicle", "customer").prefetch_related(
+            "documents"
+        ),
+        pk=pk,
+        customer=request.user,
+    )
+
+    profile, _ = ClientProfile.objects.get_or_create(user=request.user)
+
+    required_document_types = REQUIRED_DOCUMENTS_BY_APPLICATION_TYPE.get(
+        dossier.application_type,
+        [],
+    )
+
+    uploaded_document_types = set(
+        dossier.documents.values_list("document_type", flat=True)
+    )
+
+    required_documents_count = len(required_document_types)
+    uploaded_documents_count = len(
+        uploaded_document_types.intersection(required_document_types)
+    )
+
+    completion_percentage = 0
+
+    if required_documents_count:
+        completion_percentage = round(
+            uploaded_documents_count / required_documents_count * 100
+        )
+
+    is_dossier_complete = (
+        required_documents_count > 0
+        and uploaded_documents_count == required_documents_count
+    )
+
+    document_upload_errors = {}
+
+    if request.method == "POST":
+        action = request.POST.get("action")
+
+        if action == "save_information":
+            form = DossierCompletionForm(request.POST, instance=dossier)
+
+            if form.is_valid():
+                dossier = form.save(commit=False)
+
+                if (
+                    dossier.data_processing_consent
+                    and not dossier.data_processing_consent_at
+                ):
+                    dossier.data_processing_consent_at = timezone.now()
+
+                dossier.save()
+
+                return redirect("complete_dossier", pk=dossier.pk)
+
+        elif action == "upload_document":
+            form = DossierCompletionForm(instance=dossier)
+            document_type = request.POST.get("document_type")
+            uploaded_file = request.FILES.get("file")
+
+            upload_form = DocumentUploadForm(
+                {
+                    "document_type": document_type,
+                },
+                {
+                    "file": uploaded_file,
+                },
+                allowed_document_types=[
+                    (doc_type, doc_type) for doc_type in required_document_types
+                ],
+            )
+
+            if upload_form.is_valid():
+                Document.objects.update_or_create(
+                    dossier=dossier,
+                    document_type=upload_form.cleaned_data["document_type"],
+                    defaults={
+                        "file": upload_form.cleaned_data["file"],
+                        "validation_status": Document.ValidationStatus.PENDING,
+                    },
+                )
+
+                return redirect("complete_dossier", pk=dossier.pk)
+
+            document_upload_errors[document_type] = upload_form.errors
+
+        elif action == "submit_dossier":
+            form = DossierCompletionForm(instance=dossier)
+
+            if is_dossier_complete and dossier.status == Dossier.Status.DRAFT:
+                old_status = dossier.status
+                dossier.status = Dossier.Status.SUBMITTED
+                dossier.submitted_at = timezone.now()
+                dossier.save(update_fields=["status", "submitted_at", "updated_at"])
+
+                DossierStatusHistory.objects.create(
+                    dossier=dossier,
+                    old_status=old_status,
+                    new_status=dossier.status,
+                    changed_by=request.user,
+                    comment="Dossier soumis par le client après dépôt des documents",
+                )
+
+                return redirect("dossier_detail", pk=dossier.pk)
+        else:
+            form = DossierCompletionForm(instance=dossier)
+    else:
+        form = DossierCompletionForm(instance=dossier)
+
+    return render(
+        request,
+        "dossiers/complete_dossier.html",
+        {
+            "dossier": dossier,
+            "profile": profile,
+            "form": form,
+            "required_document_types": required_document_types,
+            "completion_percentage": completion_percentage,
+            "document_upload_errors": document_upload_errors,
+            "is_dossier_complete": is_dossier_complete,
+        },
+    )
+
 @login_required
 def submit_dossier(request, pk):
     dossier = get_object_or_404(
@@ -139,3 +286,17 @@ def delete_dossier(request, pk):
     dossier.delete()
 
     return redirect("accounts:espace_client")
+
+@login_required
+def document_download(request, pk):
+    document = get_object_or_404(
+        Document.objects.select_related("dossier", "dossier__customer"),
+        pk=pk,
+        dossier__customer=request.user,
+    )
+
+    return FileResponse(
+        document.file.open("rb"),
+        as_attachment=False,
+        filename=document.file.name.split("/")[-1],
+    )

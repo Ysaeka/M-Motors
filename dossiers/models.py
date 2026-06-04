@@ -30,6 +30,10 @@ class Dossier(models.Model):
         APPROVED = "approved", "Accepté"
         REJECTED = "rejected", "Refusé"
 
+    class HousingStatus(models.TextChoices):
+        TENANT = "tenant", "Locataire"
+        OWNER = "owner", "Propriétaire"
+
     customer = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -44,6 +48,16 @@ class Dossier(models.Model):
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.DRAFT)
     customer_note = models.TextField(blank=True)
     internal_note = models.TextField(blank=True)
+    birth_date = models.DateField(null=True, blank=True)
+    address = models.TextField(blank=True)
+    postal_code = models.CharField(max_length=10, blank=True)
+    city = models.CharField(max_length=100, blank=True)
+    housing_status = models.CharField(max_length=20,choices=HousingStatus.choices,blank=True,)
+    monthly_rent = models.DecimalField(max_digits=10,decimal_places=2,null=True,blank=True,)
+    has_current_credit = models.BooleanField(default=False)
+    monthly_credit_amount = models.DecimalField(max_digits=10,decimal_places=2,null=True,blank=True,)
+    data_processing_consent = models.BooleanField(default=False)
+    data_processing_consent_at = models.DateTimeField(null=True, blank=True)
     options = models.ManyToManyField(Option, blank=True, related_name="dossiers")
     created_at = models.DateTimeField(auto_now_add=True)
     submitted_at = models.DateTimeField(null=True, blank=True)
@@ -60,6 +74,8 @@ class Document(models.Model):
         DRIVER_LICENSE = "driver_license", "Permis de conduire"
         PROOF_OF_ADDRESS = "proof_of_address", "Justificatif de domicile"
         PROOF_OF_INCOME = "proof_of_income", "Justificatif de revenus"
+        TAX_NOTICE = "tax_notice", "Avis d'imposition"
+        RENT_RECEIPT = "rent_receipt", "Quittance de loyer"
         OTHER = "other", "Autre"
 
     class ValidationStatus(models.TextChoices):

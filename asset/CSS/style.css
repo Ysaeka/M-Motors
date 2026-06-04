@@ -1292,6 +1292,24 @@ textarea.finance-input {
   color: #fff;
 }
 
+/* DEPOT DOSSIER - ajustements titres */
+
+.finance-file-section .finance-file-title {
+  font-size: 2rem;
+}
+
+.finance-file-section .section-title {
+  font-size: 1.35rem;
+  line-height: 1.25;
+  color: #26ad88;
+}
+
+.finance-file-section .progress-card .section-title,
+.finance-file-section .finance-form-card .section-title {
+  font-size: 1.35rem;
+  color: #26ad88;
+}
+
 @media (max-width: 991.98px) {
   .finance-vehicle-card {
     grid-template-columns: 1fr;
