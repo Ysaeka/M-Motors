@@ -24,9 +24,17 @@
 
         <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
           <div>
-            <span class="vehicle-badge">
-              {{ vehicle.get_availability_status_display }}
-            </span>
+            <div class="d-flex align-items-center flex-wrap gap-2">
+              <span class="vehicle-badge">
+                {{ vehicle.get_availability_status_display }}
+              </span>
+
+              {% if vehicle.offer_label %}
+                <span class="vehicle-offer-badge">
+                  {{ vehicle.offer_label }}
+                </span>
+              {% endif %}
+            </div>
 
             <h2 class="vehicle-detail-title mt-3 mb-1">
               {{ vehicle.brand }} {{ vehicle.model }} <span>{{ vehicle.year }}</span>
@@ -163,7 +171,12 @@
             <div class="col-md-6">
               <div class="feature-item">
                 <i class="bi bi-check-circle-fill"></i>
-                <span>Disponibilité : {{ vehicle.get_availability_status_display }}</span>
+                <span>
+                  Disponibilité : {{ vehicle.get_availability_status_display }}
+                  {% if vehicle.offer_label %}
+                    — Offre : {{ vehicle.offer_label }}
+                  {% endif %}
+                </span>
               </div>
             </div>
 

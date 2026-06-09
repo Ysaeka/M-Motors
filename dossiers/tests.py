@@ -275,3 +275,25 @@ class DossierRequestTests(TestCase):
             ).exists()
         )
         self.assertContains(response, "Format non autorisé")
+    
+    def test_user_can_save_lld_duration(self):
+        self.client.login(username="clienttest", password="Testpass123!")
+
+        dossier = Dossier.objects.create(
+            customer=self.user,
+            vehicle=self.vehicle,
+            application_type=Dossier.ApplicationType.LLD,
+            status=Dossier.Status.DRAFT,
+        )
+
+        response = self.client.post(
+            reverse("dossier_detail", args=[dossier.pk]),
+            {
+                "lld_duration_months": 48,
+            },
+        )
+
+        self.assertRedirects(response, reverse("dossier_detail", args=[dossier.pk]))
+
+        dossier.refresh_from_db()
+        self.assertEqual(dossier.lld_duration_months, 48)
