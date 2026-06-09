@@ -5,7 +5,7 @@ from django.http import FileResponse
 
 from accounts.models import ClientProfile
 
-from .forms import DocumentUploadForm, DossierCompletionForm
+from .forms import DocumentUploadForm, DossierCompletionForm, DossierAdvisorMessageForm
 
 from catalog.models import Vehicle
 
@@ -67,11 +67,27 @@ def dossier_detail(request, pk):
     vehicle_monthly_price = dossier.vehicle.price_monthly or Decimal("0")
     estimated_location_total = Decimal("0")
     purchase_option_estimate = None
+    advisor_message_form = DossierAdvisorMessageForm(
+        initial={
+            "subject": f"Question concernant mon dossier #{dossier.id}",
+        }
+    )
+
+    if request.method == "POST" and "advisor_message_submit" in request.POST:
+        advisor_message_form = DossierAdvisorMessageForm(request.POST)
+
+        if advisor_message_form.is_valid():
+            advisor_message = advisor_message_form.save(commit=False)
+            advisor_message.dossier = dossier
+            advisor_message.customer = request.user
+            advisor_message.save()
+
+            return redirect("dossier_detail", pk=dossier.pk)
 
     if dossier.application_type == Dossier.ApplicationType.LLD:
         lld_included_options = Option.objects.filter(is_active=True).order_by("name")
 
-        if request.method == "POST":
+        if request.method == "POST" and "lld_duration_months" in request.POST:
             lld_duration_months = request.POST.get("lld_duration_months")
             valid_durations = [choice[0] for choice in Dossier.LLDDuration.choices]
 
@@ -102,6 +118,7 @@ def dossier_detail(request, pk):
             "vehicle_monthly_price": vehicle_monthly_price,
             "estimated_location_total": estimated_location_total,
             "purchase_option_estimate": purchase_option_estimate,
+            "advisor_message_form": advisor_message_form,
         },
     )
 
@@ -194,6 +211,19 @@ def complete_dossier(request, pk):
         and uploaded_documents_count == required_documents_count
     )
 
+    vehicle_monthly_price = dossier.vehicle.price_monthly or Decimal("0")
+    estimated_location_total = Decimal("0")
+    purchase_option_estimate = None
+
+    if dossier.application_type == Dossier.ApplicationType.LLD and dossier.lld_duration_months:
+        estimated_location_total = vehicle_monthly_price * dossier.lld_duration_months
+
+        if dossier.vehicle.price_sale:
+            purchase_option_estimate = dossier.vehicle.price_sale - estimated_location_total
+
+            if purchase_option_estimate < 0:
+                purchase_option_estimate = Decimal("0")
+
     document_upload_errors = {}
 
     if request.method == "POST":
@@ -280,6 +310,9 @@ def complete_dossier(request, pk):
             "completion_percentage": completion_percentage,
             "document_upload_errors": document_upload_errors,
             "is_dossier_complete": is_dossier_complete,
+            "vehicle_monthly_price": vehicle_monthly_price,
+            "estimated_location_total": estimated_location_total,
+            "purchase_option_estimate": purchase_option_estimate,
         },
     )
 

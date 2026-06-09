@@ -24,7 +24,8 @@
 
         <p class="vehicle-list-text mb-4">
           Demande : {{ dossier.get_application_type_display }}<br>
-          Créée le {{ dossier.created_at|date:"d/m/Y à H:i" }}
+          Créée le {{ dossier.created_at|date:"d/m/Y à H:i" }}<br>
+          Dernière mise à jour le {{ dossier.updated_at|date:"d/m/Y à H:i" }}
         </p>
 
         <h2 class="vehicle-list-title mb-3">
@@ -129,6 +130,99 @@
             </div>
           </div>
         {% endif %}
+
+        <div class="alert alert-light border mb-4">
+          <h3 class="vehicle-list-title mb-3">
+            Suivi de votre dossier
+          </h3>
+
+          <p class="vehicle-list-text mb-3">
+            {{ dossier.status_message }}
+          </p>
+
+          {% if dossier.status_history.all %}
+            <div class="dossier-timeline">
+              {% for history in dossier.status_history.all reversed %}
+                <div class="dossier-timeline-item">
+                  <div class="dossier-timeline-dot"></div>
+
+                  <div>
+                    <p class="mb-1">
+                      <strong>{{ history.created_at|date:"d/m/Y à H:i" }}</strong>
+                    </p>
+
+                    <p class="mb-0 vehicle-list-text">
+                      {% if history.comment %}
+                        {{ history.comment }}
+                      {% else %}
+                        Statut mis à jour : {{ history.get_new_status_display }}
+                      {% endif %}
+                    </p>
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <p class="vehicle-list-text mb-0">
+              Aucun historique disponible pour le moment.
+            </p>
+          {% endif %}
+        </div>
+
+        <div id="contact-conseiller" class="alert alert-white border mb-4">
+            <div class="d-flex flex-column flex-md-row justify-content-between gap-3 align-items-md-center">
+                <div>
+                    <h3 class="vehicle-list-title mb-2">
+                        <i class="bi bi-chat-dots-fill me-2"></i>
+                        Besoin de contacter un conseiller ?
+                    </h3>
+
+                    <p class="vehicle-list-text mb-0">
+                        Vous pouvez envoyer un message à M-Motors concernant ce dossier.
+                        Le numéro de dossier sera automatiquement associé à votre demande.
+                    </p>
+                </div>
+
+                <button
+                class="btn btn-detail"
+                type="button"
+                data-bs-toggle="collapse"
+                data-bs-target="#advisor-message-form"
+                aria-expanded="false"
+                aria-controls="advisor-message-form"
+                >
+                Contacter un conseiller
+                </button>
+            </div>
+
+            <div class="collapse mt-4" id="advisor-message-form">
+                <form method="post">
+                {% csrf_token %}
+
+                <input type="hidden" name="advisor_message_submit" value="1">
+
+                <div class="mb-3">
+                    <label for="{{ advisor_message_form.subject.id_for_label }}" class="form-label">
+                    Sujet
+                    </label>
+                    {{ advisor_message_form.subject }}
+                    {{ advisor_message_form.subject.errors }}
+                </div>
+
+                <div class="mb-3">
+                    <label for="{{ advisor_message_form.message.id_for_label }}" class="form-label">
+                    Votre message
+                    </label>
+                    {{ advisor_message_form.message }}
+                    {{ advisor_message_form.message.errors }}
+                </div>
+
+                <button type="submit" class="btn btn-detail">
+                    Envoyer mon message
+                </button>
+                </form>
+            </div>
+        </div>
 
         {% if dossier.status == "draft" %}
           <div class="alert alert-light border mb-0">

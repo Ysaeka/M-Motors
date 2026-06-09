@@ -3,6 +3,7 @@ from datetime import date
 from django import forms
 
 from .models import Dossier
+from .models import DossierAdvisorMessage
 
 
 class DossierCompletionForm(forms.ModelForm):
@@ -189,3 +190,27 @@ class DocumentUploadForm(forms.Form):
             )
 
         return file
+
+class DossierAdvisorMessageForm(forms.ModelForm):
+    class Meta:
+        model = DossierAdvisorMessage
+        fields = ["subject", "message"]
+        labels = {
+            "subject": "Sujet",
+            "message": "Votre message",
+        }
+        widgets = {
+            "subject": forms.TextInput(
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "Question concernant mon dossier",
+                }
+            ),
+            "message": forms.Textarea(
+                attrs={
+                    "class": "form-control",
+                    "rows": 5,
+                    "placeholder": "Expliquez votre demande à un conseiller M-Motors...",
+                }
+            ),
+        }

@@ -93,39 +93,54 @@
                     </div>
 
                     <div class="finance-content">
-                    <h3 class="finance-title">
-                        {{ dossier.vehicle.brand }} {{ dossier.vehicle.model }}
-                    </h3>
+                        <h3 class="finance-title">
+                            {{ dossier.vehicle.brand }} {{ dossier.vehicle.model }}
+                        </h3>
 
-                    {% if dossier.application_type == "lld" %}
-                        <p class="finance-meta">
-                        Location longue durée
-                        {% if dossier.vehicle.price_monthly %}
-                            • {{ dossier.vehicle.price_monthly|floatformat:0|intcomma }} €/mois
+                        {% if dossier.application_type == "lld" %}
+                            <p class="finance-meta">
+                            Location longue durée
+                            {% if dossier.vehicle.price_monthly %}
+                                • {{ dossier.vehicle.price_monthly|floatformat:0|intcomma }} €/mois
+                            {% endif %}
+                            </p>
+                        {% else %}
+                            <p class="finance-meta">
+                            Achat
+                            {% if dossier.vehicle.price_sale %}
+                                • {{ dossier.vehicle.price_sale|floatformat:0|intcomma }} €
+                            {% endif %}
+                            </p>
                         {% endif %}
+
+                        <p class="finance-date">
+                            Dossier créé le {{ dossier.created_at|date:"d/m/Y" }}
+                            {% if dossier.updated_at %}
+                            • Mis à jour le {{ dossier.updated_at|date:"d/m/Y" }}
+                            {% endif %}
                         </p>
-                    {% else %}
-                        <p class="finance-meta">
-                        Achat
-                        {% if dossier.vehicle.price_sale %}
-                            • {{ dossier.vehicle.price_sale|floatformat:0|intcomma }} €
-                        {% endif %}
+
+                        <p class="finance-tracking-message">
+                            {{ dossier.status_message }}
                         </p>
-                    {% endif %}
+                        </div>
 
-                    <p class="finance-date">
-                        Dossier créé le {{ dossier.created_at|date:"d/m/Y" }}
-                    </p>
-                    </div>
+                        <div class="finance-status-block">
+                        <span class="status-badge status-pending">
+                            {{ dossier.get_status_display }}
+                        </span>
 
-                    <div class="finance-status-block">
-                    <span class="status-badge status-pending">
-                        {{ dossier.get_status_display }}
-                    </span>
+                        <a href="{% url 'dossier_detail' dossier.pk %}" class="btn btn-finance-detail">
+                            Voir le dossier
+                        </a>
 
-                    <a href="{% url 'dossier_detail' dossier.pk %}" class="btn btn-finance-detail">
-                        Voir le dossier
-                    </a>
+                        <a
+                            href="{% url 'dossier_detail' dossier.pk %}#contact-conseiller"
+                            class="dashboard-link mt-2 contact-advisor-link"
+                        >
+                            <i class="bi bi-chat-dots-fill me-1"></i>
+                            Contacter un conseiller
+                        </a>
                     </div>
                 </div>
                 {% endfor %}
