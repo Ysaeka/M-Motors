@@ -50,3 +50,17 @@ class Vehicle(models.Model):
 
     def __str__(self):
         return f"{self.brand} {self.model} ({self.reference})"
+    
+    @property
+    def offer_label(self):
+        if self.offer_type == self.OfferType.SALE:
+            return "Achat"
+        if self.offer_type == self.OfferType.LLD:
+            return "Location"
+        if self.offer_type == self.OfferType.BOTH:
+            return "Achat & Location"
+        return ""
+
+    @property
+    def has_lld_options(self):
+        return self.offer_type in [self.OfferType.LLD, self.OfferType.BOTH]

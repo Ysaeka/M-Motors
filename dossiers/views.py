@@ -9,7 +9,9 @@ from .forms import DocumentUploadForm, DossierCompletionForm
 
 from catalog.models import Vehicle
 
-from .models import Document, Dossier, DossierStatusHistory
+from decimal import Decimal
+
+from .models import Document, Dossier, DossierStatusHistory, Option
 
 
 ACTIVE_DOSSIER_STATUSES = [
@@ -49,7 +51,6 @@ def dossier_list(request):
         },
     )
 
-
 @login_required
 def dossier_detail(request, pk):
     dossier = get_object_or_404(
@@ -62,14 +63,47 @@ def dossier_detail(request, pk):
         customer=request.user,
     )
 
+    lld_included_options = Option.objects.none()
+    vehicle_monthly_price = dossier.vehicle.price_monthly or Decimal("0")
+    estimated_location_total = Decimal("0")
+    purchase_option_estimate = None
+
+    if dossier.application_type == Dossier.ApplicationType.LLD:
+        lld_included_options = Option.objects.filter(is_active=True).order_by("name")
+
+        if request.method == "POST":
+            lld_duration_months = request.POST.get("lld_duration_months")
+            valid_durations = [choice[0] for choice in Dossier.LLDDuration.choices]
+
+            if lld_duration_months:
+                lld_duration_months = int(lld_duration_months)
+
+                if lld_duration_months in valid_durations:
+                    dossier.lld_duration_months = lld_duration_months
+                    dossier.save(update_fields=["lld_duration_months"])
+
+            return redirect("dossier_detail", pk=dossier.pk)
+
+        if dossier.lld_duration_months:
+            estimated_location_total = vehicle_monthly_price * dossier.lld_duration_months
+
+            if dossier.vehicle.price_sale:
+                purchase_option_estimate = dossier.vehicle.price_sale - estimated_location_total
+
+                if purchase_option_estimate < 0:
+                    purchase_option_estimate = Decimal("0")
+
     return render(
         request,
         "dossiers/dossier_detail.html",
         {
             "dossier": dossier,
+            "lld_included_options": lld_included_options,
+            "vehicle_monthly_price": vehicle_monthly_price,
+            "estimated_location_total": estimated_location_total,
+            "purchase_option_estimate": purchase_option_estimate,
         },
     )
-
 
 @login_required
 def start_dossier(request, vehicle_pk, application_type):

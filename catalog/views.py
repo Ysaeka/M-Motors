@@ -1,6 +1,8 @@
 from django.core.paginator import Paginator
 from django.shortcuts import get_object_or_404, render
 
+from dossiers.models import Option
+
 from .models import Vehicle
 
 
@@ -101,4 +103,19 @@ def vehicle_list(request):
 
 def vehicle_detail(request, pk):
     vehicle = get_object_or_404(Vehicle, pk=pk)
-    return render(request, "catalog/vehicle_detail.html", {"vehicle": vehicle})
+
+    lld_options = Option.objects.none()
+    if vehicle.has_lld_options:
+        lld_options = Option.objects.filter(
+            is_active=True,
+            is_default_in_lld=True,
+        ).order_by("name")
+
+    return render(
+        request,
+        "catalog/vehicle_detail.html",
+        {
+            "vehicle": vehicle,
+            "lld_options": lld_options,
+        },
+    )

@@ -113,10 +113,16 @@ document.addEventListener("DOMContentLoaded", function () {
 
   toggleMonthlyCreditField();
 
-    /*
-   * Dossier completion form
-   * Show rent amount only when user is tenant
-   */
+/* Dossier Option checkbox */
+  const optionCheckboxes = document.querySelectorAll(".option-auto-submit");
+
+  optionCheckboxes.forEach((checkbox) => {
+    checkbox.addEventListener("change", () => {
+      checkbox.closest("form").submit();
+    });
+  });
+/* Dossier completion form */
+
   const housingStatusSelect = document.getElementById("id_housing_status");
   const monthlyRentWrapper = document.getElementById("monthly-rent-wrapper");
 

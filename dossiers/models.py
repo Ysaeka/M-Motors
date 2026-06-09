@@ -66,7 +66,19 @@ class Dossier(models.Model):
 
     def __str__(self):
         return f"Dossier #{self.id} - {self.customer}"
+    class LLDDuration(models.IntegerChoices):
+        MONTHS_24 = 24, "24 mois"
+        MONTHS_36 = 36, "36 mois"
+        MONTHS_48 = 48, "48 mois"
+        MONTHS_60 = 60, "60 mois"
+        MONTHS_72 = 72, "72 mois"
+        MONTHS_84 = 84, "84 mois"
 
+    lld_duration_months = models.PositiveSmallIntegerField(
+        choices=LLDDuration.choices,
+        null=True,
+        blank=True,
+    )
 
 class Document(models.Model):
     class DocumentType(models.TextChoices):
