@@ -29,44 +29,84 @@
       </div>
     </div>
 
-    <div class="finance-vehicle-card">
-      {% if dossier.vehicle.image %}
-        <img
-          src="{% static dossier.vehicle.image %}"
-          alt="{{ dossier.vehicle.brand }} {{ dossier.vehicle.model }}"
-          class="finance-vehicle-image"
-        >
-      {% else %}
-        <img
-          src="{% static 'img/concession.png' %}"
-          alt="{{ dossier.vehicle.brand }} {{ dossier.vehicle.model }}"
-          class="finance-vehicle-image"
-        >
-      {% endif %}
-
-      <div class="finance-vehicle-content">
-        <h2>{{ dossier.vehicle.brand }} {{ dossier.vehicle.model }}</h2>
-
-        {% if dossier.application_type == "lld" %}
-          <p>
-            Location longue durée
-            {% if dossier.vehicle.price_monthly %}
-              • {{ dossier.vehicle.price_monthly|floatformat:0|intcomma }} € / mois
-            {% endif %}
-          </p>
+    <div class="finance-vehicle-card finance-vehicle-card-summary">
+      <div class="finance-vehicle-main">
+        {% if dossier.vehicle.image %}
+          <img
+            src="{% static dossier.vehicle.image %}"
+            alt="{{ dossier.vehicle.brand }} {{ dossier.vehicle.model }}"
+            class="finance-vehicle-image"
+          >
         {% else %}
-          <p>
-            Achat
-            {% if dossier.vehicle.price_sale %}
-              • {{ dossier.vehicle.price_sale|floatformat:0|intcomma }} €
-            {% endif %}
-          </p>
+          <img
+            src="{% static 'img/concession.png' %}"
+            alt="{{ dossier.vehicle.brand }} {{ dossier.vehicle.model }}"
+            class="finance-vehicle-image"
+          >
         {% endif %}
 
-        <p>
-          {{ dossier.vehicle.year }} • {{ dossier.vehicle.mileage|intcomma }} km
-        </p>
+        <div class="finance-vehicle-content">
+          <h2>{{ dossier.vehicle.brand }} {{ dossier.vehicle.model }}</h2>
+
+          {% if dossier.application_type == "lld" %}
+            <p>
+              Location longue durée
+              {% if dossier.vehicle.price_monthly %}
+                • {{ dossier.vehicle.price_monthly|floatformat:0|intcomma }} € / mois
+              {% endif %}
+            </p>
+          {% else %}
+            <p>
+              Achat
+              {% if dossier.vehicle.price_sale %}
+                • {{ dossier.vehicle.price_sale|floatformat:0|intcomma }} €
+              {% endif %}
+            </p>
+          {% endif %}
+
+          <p>
+            {{ dossier.vehicle.year }} • {{ dossier.vehicle.mileage|intcomma }} km
+          </p>
+        </div>
       </div>
+
+      {% if dossier.application_type == "lld" %}
+        <div class="finance-location-summary">
+          <h3>Récapitulatif de votre location</h3>
+
+          <p>
+            <span>Durée choisie</span>
+            <strong>
+              {% if dossier.lld_duration_months %}
+                {{ dossier.lld_duration_months }} mois
+              {% else %}
+                Non renseignée
+              {% endif %}
+            </strong>
+          </p>
+
+          <p>
+            <span>Mensualité location</span>
+            <strong>{{ vehicle_monthly_price|floatformat:2 }} €/mois</strong>
+          </p>
+
+          <p>
+            <span>Total estimé pendant la location</span>
+            <strong>{{ estimated_location_total|floatformat:2 }} €</strong>
+          </p>
+
+          <p class="mb-0">
+            <span>Option d’achat estimée</span>
+            <strong>
+              {% if purchase_option_estimate is not None %}
+                {{ purchase_option_estimate|floatformat:2 }} €
+              {% else %}
+                À définir par M-Motors
+              {% endif %}
+            </strong>
+          </p>
+        </div>
+      {% endif %}
     </div>
 
     <div class="progress-card">
@@ -79,7 +119,7 @@
         <div class="custom-progress-bar" style="width: {{ completion_percentage }}%;"></div>
       </div>
 
-      <p class="progress-help">
+      <p class="progress-help mb-0">
         Ajoutez vos documents justificatifs un par un. Vous pouvez revenir plus tard pour compléter votre dossier.
       </p>
     </div>

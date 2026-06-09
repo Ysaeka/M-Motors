@@ -194,6 +194,19 @@ def complete_dossier(request, pk):
         and uploaded_documents_count == required_documents_count
     )
 
+    vehicle_monthly_price = dossier.vehicle.price_monthly or Decimal("0")
+    estimated_location_total = Decimal("0")
+    purchase_option_estimate = None
+
+    if dossier.application_type == Dossier.ApplicationType.LLD and dossier.lld_duration_months:
+        estimated_location_total = vehicle_monthly_price * dossier.lld_duration_months
+
+        if dossier.vehicle.price_sale:
+            purchase_option_estimate = dossier.vehicle.price_sale - estimated_location_total
+
+            if purchase_option_estimate < 0:
+                purchase_option_estimate = Decimal("0")
+
     document_upload_errors = {}
 
     if request.method == "POST":
@@ -280,6 +293,9 @@ def complete_dossier(request, pk):
             "completion_percentage": completion_percentage,
             "document_upload_errors": document_upload_errors,
             "is_dossier_complete": is_dossier_complete,
+            "vehicle_monthly_price": vehicle_monthly_price,
+            "estimated_location_total": estimated_location_total,
+            "purchase_option_estimate": purchase_option_estimate,
         },
     )
 
