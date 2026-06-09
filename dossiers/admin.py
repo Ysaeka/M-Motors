@@ -2,7 +2,7 @@
 
 from django.contrib import admin
 
-from .models import Dossier, Document, DossierStatusHistory, Option
+from .models import Dossier, Document, DossierStatusHistory, Option, DossierAdvisorMessage
 
 
 @admin.register(Option)
@@ -49,7 +49,33 @@ class DossierStatusHistoryAdmin(admin.ModelAdmin):
         "old_status",
         "new_status",
         "changed_by",
-        "changed_at",
+        "created_at",
     )
-    list_filter = ("old_status", "new_status", "changed_at")
+    list_filter = ("old_status", "new_status", "created_at")
     search_fields = ("dossier__id", "changed_by__username")
+
+@admin.register(DossierAdvisorMessage)
+class DossierAdvisorMessageAdmin(admin.ModelAdmin):
+    list_display = (
+        "id",
+        "dossier",
+        "customer",
+        "subject",
+        "is_read",
+        "created_at",
+    )
+    list_filter = ("is_read", "created_at")
+    search_fields = (
+        "dossier__id",
+        "customer__username",
+        "customer__email",
+        "subject",
+        "message",
+    )
+    readonly_fields = (
+        "dossier",
+        "customer",
+        "subject",
+        "message",
+        "created_at",
+    )
