@@ -1,0 +1,469 @@
+{% extends "base.html" %}
+{% load static humanize %}
+
+{% block content %}
+<section class="admin-layout">
+    <aside class="admin-sidebar">
+        <div class="admin-sidebar-brand">
+            <img src="{% static 'img/logo.png' %}" alt="M Motors" class="admin-logo">
+            <span>Back-office</span>
+        </div>
+
+        <nav class="admin-nav">
+            <a href="{% url 'backoffice:dashboard' %}" class="admin-nav-link">
+                <i class="bi bi-grid"></i><span>Tableau de bord</span>
+            </a>
+
+            <a href="{% url 'backoffice:dossier_list' %}" class="admin-nav-link active">
+                <i class="bi bi-folder2-open"></i><span>Demandes en cours</span>
+            </a>
+
+            <a href="#" class="admin-nav-link">
+                <i class="bi bi-hourglass-split"></i><span>À traiter</span>
+            </a>
+
+            <a href="#" class="admin-nav-link">
+                <i class="bi bi-chat-dots"></i><span>Messages clients</span>
+            </a>
+
+            <a href="#" class="admin-nav-link">
+                <i class="bi bi-people"></i><span>Clients</span>
+            </a>
+
+            <a href="#" class="admin-nav-link">
+                <i class="bi bi-car-front"></i><span>Véhicules</span>
+            </a>
+
+            <a href="#" class="admin-nav-link">
+                <i class="bi bi-check2-circle"></i><span>Dossiers validés</span>
+            </a>
+
+            <a href="#" class="admin-nav-link">
+                <i class="bi bi-gear"></i><span>Paramètres</span>
+            </a>
+        </nav>
+    </aside>
+
+    <div class="admin-main">
+        <header class="admin-topbar">
+            <div>
+                <p class="admin-page-label">Espace commercial</p>
+                <h1 class="admin-page-title">Dossier #{{ dossier.id }}</h1>
+            </div>
+
+            <div class="admin-topbar-actions">
+                <a href="{% url 'backoffice:dossier_list' %}" class="admin-card-link">
+                    Retour aux demandes
+                </a>
+
+                <button class="admin-icon-btn">
+                    <i class="bi bi-bell"></i>
+                </button>
+
+                <div class="admin-user">
+                    <div class="admin-user-avatar">
+                        {{ request.user.first_name|first|default:request.user.username|first|upper }}{{ request.user.last_name|first|upper }}
+                    </div>
+                    <div>
+                        <strong>{{ request.user.get_full_name|default:request.user.username }}</strong>
+                        <span>Équipe commerciale</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="row g-4 mb-4">
+            <div class="col-xl-4">
+                <div class="admin-card h-100">
+                    <div class="admin-card-header">
+                        <h2 class="admin-card-title">Client</h2>
+                    </div>
+
+                    <div class="admin-activity-item">
+                        <strong>{{ dossier.customer.get_full_name|default:dossier.customer.username }}</strong>
+                        <p>{{ dossier.customer.email|default:"Email non renseigné" }}</p>
+                    </div>
+
+                    <div class="admin-activity-item">
+                        <strong>Adresse</strong>
+                        <p>
+                            {% if dossier.address %}
+                                {{ dossier.address }}<br>
+                                {{ dossier.postal_code }} {{ dossier.city }}
+                            {% else %}
+                                Non renseignée
+                            {% endif %}
+                        </p>
+                    </div>
+
+                    <div class="admin-activity-item">
+                        <strong>Situation logement</strong>
+                        <p>{{ dossier.get_housing_status_display|default:"Non renseignée" }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-xl-4">
+                <div class="admin-card h-100">
+                    <div class="admin-card-header">
+                        <h2 class="admin-card-title">Véhicule</h2>
+                    </div>
+
+                    <div class="admin-activity-item">
+                        <strong>{{ dossier.vehicle.brand }} {{ dossier.vehicle.model }}</strong>
+                        <p>
+                            Référence : {{ dossier.vehicle.reference }}<br>
+                            Année : {{ dossier.vehicle.year }}<br>
+                            Kilométrage : {{ dossier.vehicle.mileage|intcomma }} km
+                        </p>
+                    </div>
+
+                    <div class="admin-activity-item">
+                        <strong>Demande</strong>
+                        <p>{{ dossier.get_application_type_display }}</p>
+                    </div>
+
+                    <div class="admin-activity-item">
+                        <strong>Prix</strong>
+                        <p>
+                            {% if dossier.application_type == "lld" and dossier.vehicle.price_monthly %}
+                                {{ dossier.vehicle.price_monthly|floatformat:0|intcomma }} €/mois
+                            {% elif dossier.vehicle.price_sale %}
+                                {{ dossier.vehicle.price_sale|floatformat:0|intcomma }} €
+                            {% else %}
+                                Non renseigné
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-xl-4">
+                <div class="admin-card h-100">
+                    <div class="admin-card-header">
+                        <h2 class="admin-card-title">Statut dossier</h2>
+                    </div>
+
+                    <div class="admin-activity-item">
+                        {% if dossier.status == "approved" %}
+                            <span class="admin-badge approved">{{ dossier.get_status_display }}</span>
+                        {% elif dossier.status == "rejected" %}
+                            <span class="admin-badge missing">{{ dossier.get_status_display }}</span>
+                        {% elif dossier.status == "under_review" %}
+                            <span class="admin-badge pending">{{ dossier.get_status_display }}</span>
+                        {% elif dossier.status == "submitted" %}
+                            <span class="admin-badge pending">{{ dossier.get_status_display }}</span>
+                        {% else %}
+                            <span class="admin-badge neutral">{{ dossier.get_status_display }}</span>
+                        {% endif %}
+                    </div>
+
+                    <div class="admin-activity-item">
+                        <strong>Dates</strong>
+                        <p>
+                            Créé le {{ dossier.created_at|date:"d/m/Y à H:i" }}<br>
+                            Mis à jour le {{ dossier.updated_at|date:"d/m/Y à H:i" }}
+                            {% if dossier.submitted_at %}
+                                <br>Soumis le {{ dossier.submitted_at|date:"d/m/Y à H:i" }}
+                            {% endif %}
+                            {% if dossier.reviewed_at %}
+                                <br>Instruit le {{ dossier.reviewed_at|date:"d/m/Y à H:i" }}
+                            {% endif %}
+                        </p>
+                    </div>
+
+                    <div class="admin-activity-item">
+                        <strong>Note client</strong>
+                        <p>{{ dossier.customer_note|default:"Aucune note client." }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% if dossier.application_type == "lld" %}
+            <div class="admin-card mb-4">
+                <div class="admin-card-header">
+                    <h2 class="admin-card-title">Informations location longue durée</h2>
+                </div>
+
+                <div class="row g-4">
+                    <div class="col-md-4">
+                        <div class="admin-activity-item">
+                            <strong>Durée choisie</strong>
+                            <p>
+                                {% if dossier.lld_duration_months %}
+                                    {{ dossier.lld_duration_months }} mois
+                                {% else %}
+                                    Non renseignée
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="admin-activity-item">
+                            <strong>Mensualité</strong>
+                            <p>
+                                {% if dossier.vehicle.price_monthly %}
+                                    {{ dossier.vehicle.price_monthly|floatformat:0|intcomma }} €/mois
+                                {% else %}
+                                    Non renseignée
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="admin-activity-item">
+                            <strong>Options incluses</strong>
+                            <p>Assurance, assistance, entretien, SAV et contrôle technique.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+
+        <div class="row g-4">
+            <div class="col-xl-8">
+                <div class="admin-card mb-4">
+                    <div class="admin-card-header">
+                        <div>
+                            <h2 class="admin-card-title">Documents justificatifs</h2>
+                            <p class="admin-page-label">
+                                Visualisation et téléchargement des pièces transmises par le client.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table admin-table align-middle">
+                            <thead>
+                                <tr>
+                                    <th>Document</th>
+                                    <th>Statut</th>
+                                    <th>Déposé le</th>
+                                    <th>Motif refus</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                {% for document in documents %}
+                                    <tr>
+                                        <td>{{ document.get_document_type_display }}</td>
+
+                                        <td>
+                                            {% if document.validation_status == "validated" %}
+                                                <span class="admin-badge approved">{{ document.get_validation_status_display }}</span>
+                                            {% elif document.validation_status == "rejected" %}
+                                                <span class="admin-badge missing">{{ document.get_validation_status_display }}</span>
+                                            {% else %}
+                                                <span class="admin-badge pending">{{ document.get_validation_status_display }}</span>
+                                            {% endif %}
+                                        </td>
+
+                                        <td>{{ document.uploaded_at|date:"d/m/Y à H:i" }}</td>
+
+                                        <td>
+                                            {{ document.rejection_reason|default:"—" }}
+                                        </td>
+
+                                        <td>
+                                            {% if document.file %}
+                                                <a href="{{ document.file.url }}" target="_blank" class="admin-table-link d-block mb-2">
+                                                    Visualiser le document
+                                                </a>
+                                            {% else %}
+                                                <span class="d-block mb-2">—</span>
+                                            {% endif %}
+
+                                            <form method="post" class="d-inline">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="action" value="validate_document">
+                                                <input type="hidden" name="document_id" value="{{ document.id }}">
+                                                <button type="submit" class="btn btn-sm btn-success">
+                                                    Valider
+                                                </button>
+                                            </form>
+
+                                            <form method="post" class="d-inline">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="action" value="reject_document">
+                                                <input type="hidden" name="document_id" value="{{ document.id }}">
+                                                <button type="submit" class="btn btn-sm btn-danger">
+                                                    Refuser
+                                                </button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                {% empty %}
+                                    <tr>
+                                        <td colspan="5">Aucun document transmis pour ce dossier.</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="admin-card mb-4">
+                    <div class="admin-card-header">
+                        <h2 class="admin-card-title">Messages client</h2>
+                    </div>
+
+                    {% for message in messages %}
+                        <div class="admin-activity-item mb-3">
+                            <strong>Message client</strong>
+                            <p>{{ message.message|linebreaksbr }}</p>
+
+                            <p class="admin-page-label mb-2">
+                                Envoyé le {{ message.created_at|date:"d/m/Y à H:i" }}
+                            </p>
+
+                            {% if message.advisor_response %}
+                                <div class="admin-activity-item mt-3">
+                                    <strong>Réponse commerciale</strong>
+                                    <p>{{ message.advisor_response|linebreaksbr }}</p>
+
+                                    <p class="admin-page-label mb-0">
+                                        Répondu le {{ message.responded_at|date:"d/m/Y à H:i" }}
+                                        {% if message.responded_by %}
+                                            par {{ message.responded_by.get_full_name|default:message.responded_by.username }}
+                                        {% endif %}
+                                    </p>
+                                </div>
+                            {% else %}
+                                <form method="post" class="mt-3">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="respond_message">
+                                    <input type="hidden" name="message_id" value="{{ message.id }}">
+
+                                    <div class="mb-3">
+                                        <textarea
+                                            name="advisor_response"
+                                            class="form-control"
+                                            rows="4"
+                                            placeholder="Répondre au client..."
+                                            required
+                                        ></textarea>
+                                    </div>
+
+                                    <button type="submit" class="btn btn-detail w-100">
+                                        Envoyer la réponse au client
+                                    </button>
+                                </form>
+                            {% endif %}
+                        </div>
+                    {% empty %}
+                        <div class="admin-activity-item">
+                            <p>Aucun message client pour ce dossier.</p>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="col-xl-4">
+                <div class="admin-card mb-4">
+                    <div class="admin-card-header">
+                        <h2 class="admin-card-title">Actions commerciales</h2>
+                    </div>
+
+                    <form method="post" class="mb-2">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="mark_under_review">
+                        <button type="submit" class="btn btn-primary w-100">
+                            Passer en instruction
+                        </button>
+                    </form>
+
+                    <form method="post" class="mb-2">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="approve">
+                        <button type="submit" class="btn btn-success w-100">
+                            Valider le dossier
+                        </button>
+                    </form>
+
+                    <form method="post" class="mb-3">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="reject">
+                        <button type="submit" class="btn btn-danger w-100">
+                            Refuser le dossier
+                        </button>
+                    </form>
+
+                    <p class="admin-page-label mb-0">
+                        Ces actions mettent à jour le statut du dossier et alimentent l’historique.
+                    </p>
+                </div>
+
+                <div class="admin-card mb-4">
+                    <div class="admin-card-header">
+                        <h2 class="admin-card-title">Commentaire interne</h2>
+                    </div>
+
+                    {% if dossier.internal_note %}
+                        <div class="admin-activity-item mb-3">
+                            <strong>Note actuelle</strong>
+                            <p>{{ dossier.internal_note|linebreaksbr }}</p>
+                        </div>
+                    {% else %}
+                        <div class="admin-activity-item mb-3">
+                            <strong>Aucune note interne</strong>
+                            <p>Aucun commentaire interne n’a encore été ajouté à ce dossier.</p>
+                        </div>
+                    {% endif %}
+
+                    <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="update_internal_note">
+
+                        <div class="mb-3">
+                            <textarea
+                                name="internal_note"
+                                class="form-control"
+                                rows="4"
+                                placeholder="Ajouter un nouveau commentaire interne..."
+                            ></textarea>
+                        </div>
+
+                        <button type="submit" class="btn btn-detail w-100">
+                            Enregistrer le commentaire
+                        </button>
+                    </form>
+
+                    <p class="admin-page-label mt-3 mb-0">
+                        Cette note est visible uniquement dans le back-office.
+                    </p>
+                </div>
+
+                <div class="admin-card">
+                    <div class="admin-card-header">
+                        <h2 class="admin-card-title">Historique du dossier</h2>
+                    </div>
+
+                    {% for item in history %}
+                        <div class="admin-activity-item">
+                            <strong>
+                                {{ item.get_old_status_display }} → {{ item.get_new_status_display }}
+                            </strong>
+                            <p>{{ item.comment|default:"Mise à jour du statut." }}</p>
+                            <p class="admin-page-label">
+                                {{ item.created_at|date:"d/m/Y à H:i" }}
+                                {% if item.changed_by %}
+                                    — {{ item.changed_by.get_full_name|default:item.changed_by.username }}
+                                {% endif %}
+                            </p>
+                        </div>
+                    {% empty %}
+                        <div class="admin-activity-item">
+                            <strong>Aucun historique</strong>
+                            <p>Aucun changement de statut enregistré pour ce dossier.</p>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

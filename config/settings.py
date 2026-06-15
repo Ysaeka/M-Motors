@@ -147,6 +147,14 @@ STATICFILES_DIRS = [
 STATIC_ROOT = BASE_DIR / "staticfiles"
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
+
+# =========================
+# Media files
+# =========================
+
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
+
 # =========================
 # Authentication redirects
 # =========================
@@ -154,3 +162,10 @@ STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 LOGIN_REDIRECT_URL = "accounts:espace_client"
 LOGIN_URL = "login"
 LOGOUT_REDIRECT_URL = "home"
+
+# =========================
+# Email
+# =========================
+
+EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+DEFAULT_FROM_EMAIL = "noreply@m-motors.local"
