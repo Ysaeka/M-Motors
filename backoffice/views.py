@@ -8,6 +8,8 @@ from django.urls import reverse
 from catalog.models import Vehicle
 from dossiers.models import Dossier, DossierStatusHistory, Document, DossierAdvisorMessage
 
+from .forms import VehicleForm
+
 
 @staff_member_required
 def dashboard(request):
@@ -51,13 +53,26 @@ def dashboard(request):
 
 @staff_member_required
 def dossier_list(request):
-    dossiers = (
-        Dossier.objects.select_related("customer", "vehicle")
-        .order_by("-updated_at")
+    status_filter = request.GET.get("status")
+
+    dossiers = Dossier.objects.select_related("customer", "vehicle").order_by(
+        "-updated_at"
     )
+
+    page_title = "Demandes en cours"
+
+    if status_filter:
+        dossiers = dossiers.filter(status=status_filter)
+
+        if status_filter == Dossier.Status.SUBMITTED:
+            page_title = "Dossiers à traiter"
+        elif status_filter == Dossier.Status.APPROVED:
+            page_title = "Dossiers validés"
 
     context = {
         "dossiers": dossiers,
+        "status_filter": status_filter,
+        "page_title": page_title,
         "submitted_dossiers": Dossier.objects.filter(
             status=Dossier.Status.SUBMITTED
         ).count(),
@@ -73,6 +88,200 @@ def dossier_list(request):
     }
 
     return render(request, "backoffice/dossier_list.html", context)
+
+@staff_member_required
+def message_list(request):
+    messages = (
+        DossierAdvisorMessage.objects.select_related(
+            "dossier",
+            "dossier__customer",
+            "dossier__vehicle",
+            "responded_by",
+        )
+        .order_by("-created_at")
+    )
+
+    context = {
+        "messages": messages,
+        "total_messages": DossierAdvisorMessage.objects.count(),
+        "unanswered_messages": DossierAdvisorMessage.objects.filter(
+            advisor_response=""
+        ).count(),
+        "answered_messages": DossierAdvisorMessage.objects.exclude(
+            advisor_response=""
+        ).count(),
+    }
+
+    return render(request, "backoffice/message_list.html", context)
+
+@staff_member_required
+def client_list(request):
+    dossiers = (
+        Dossier.objects.select_related("customer", "vehicle")
+        .order_by("-updated_at")
+    )
+
+    clients_by_id = {}
+
+    for dossier in dossiers:
+        customer = dossier.customer
+
+        if customer.id not in clients_by_id:
+            clients_by_id[customer.id] = {
+                "customer": customer,
+                "dossier_count": 0,
+                "last_dossier": dossier,
+            }
+
+        clients_by_id[customer.id]["dossier_count"] += 1
+
+    clients = clients_by_id.values()
+
+    context = {
+        "clients": clients,
+        "total_clients": len(clients_by_id),
+    }
+
+    return render(request, "backoffice/client_list.html", context)
+
+@staff_member_required
+def vehicle_list(request):
+    sort = request.GET.get("sort", "brand")
+    direction = request.GET.get("direction", "asc")
+
+    allowed_sorts = {
+        "reference": "reference",
+        "brand": "brand",
+        "category": "category",
+        "year": "year",
+        "mileage": "mileage",
+        "offer_type": "offer_type",
+        "price_sale": "price_sale",
+        "price_monthly": "price_monthly",
+        "availability_status": "availability_status",
+    }
+
+    sort_field = allowed_sorts.get(sort, "brand")
+
+    if direction == "desc":
+        sort_field = f"-{sort_field}"
+
+    vehicles = Vehicle.objects.order_by(sort_field, "model")
+
+    context = {
+        "vehicles": vehicles,
+        "sort": sort,
+        "direction": direction,
+        "total_vehicles": Vehicle.objects.count(),
+        "available_vehicles": Vehicle.objects.filter(
+            availability_status=Vehicle.AvailabilityStatus.AVAILABLE
+        ).count(),
+        "unavailable_vehicles": Vehicle.objects.exclude(
+            availability_status=Vehicle.AvailabilityStatus.AVAILABLE
+        ).count(),
+    }
+
+    return render(request, "backoffice/vehicle_list.html", context)
+
+@staff_member_required
+def vehicle_create(request):
+    if request.method == "POST":
+        form = VehicleForm(request.POST, request.FILES)
+
+        if form.is_valid():
+            vehicle = form.save()
+            django_messages.success(
+                request,
+                f"Le véhicule {vehicle.reference} a bien été ajouté.",
+            )
+            return redirect("backoffice:vehicle_list")
+    else:
+        form = VehicleForm()
+
+    context = {
+        "form": form,
+        "page_title": "Ajouter un véhicule",
+        "submit_label": "Ajouter le véhicule",
+    }
+
+    return render(request, "backoffice/vehicle_form.html", context)
+
+
+@staff_member_required
+def vehicle_update(request, pk):
+    vehicle = get_object_or_404(Vehicle, pk=pk)
+
+    if request.method == "POST":
+        switch_offer = request.POST.get("switch_offer")
+
+        allowed_offer_types = [
+            Vehicle.OfferType.SALE,
+            Vehicle.OfferType.LLD,
+            Vehicle.OfferType.BOTH,
+        ]
+
+        if switch_offer in allowed_offer_types:
+            vehicle.offer_type = switch_offer
+            vehicle.save(update_fields=["offer_type", "updated_at"])
+
+            django_messages.success(
+                request,
+                f"L'offre du véhicule {vehicle.reference} a bien été mise à jour.",
+            )
+
+            return redirect("backoffice:vehicle_update", pk=vehicle.pk)
+
+        form = VehicleForm(request.POST, request.FILES, instance=vehicle)
+
+        if form.is_valid():
+            vehicle = form.save()
+            django_messages.success(
+                request,
+                f"Le véhicule {vehicle.reference} a bien été modifié.",
+            )
+            return redirect("backoffice:vehicle_list")
+
+    else:
+        form = VehicleForm(instance=vehicle)
+
+    context = {
+        "form": form,
+        "vehicle": vehicle,
+        "page_title": f"Modifier {vehicle.reference}",
+        "submit_label": "Enregistrer les modifications",
+    }
+
+    return render(request, "backoffice/vehicle_form.html", context)
+
+
+@staff_member_required
+def vehicle_switch_offer(request, pk, offer_type):
+    vehicle = get_object_or_404(Vehicle, pk=pk)
+
+    if request.method != "POST":
+        django_messages.error(request, "Action non autorisée.")
+        return redirect("backoffice:vehicle_list")
+
+    allowed_offer_types = [
+        Vehicle.OfferType.SALE,
+        Vehicle.OfferType.LLD,
+        Vehicle.OfferType.BOTH,
+    ]
+
+    if offer_type not in allowed_offer_types:
+        django_messages.error(request, "Type d'offre invalide.")
+        return redirect("backoffice:vehicle_list")
+
+    vehicle.offer_type = offer_type
+    vehicle.save(update_fields=["offer_type", "updated_at"])
+
+    django_messages.success(
+        request,
+        f"L'offre du véhicule {vehicle.reference} a bien été mise à jour.",
+    )
+
+    return redirect("backoffice:vehicle_list")
+
 
 @staff_member_required
 def dossier_detail(request, pk):

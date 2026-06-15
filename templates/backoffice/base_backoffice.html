@@ -29,35 +29,31 @@
             <span>Demandes en cours</span>
         </a>
 
-        <a href="#" class="admin-nav-link">
+        <a href="{% url 'backoffice:dossier_list' %}?status=submitted" class="admin-nav-link">
             <i class="bi bi-hourglass-split"></i>
             <span>À traiter</span>
         </a>
 
-        <a href="#" class="admin-nav-link">
+        <a href="{% url 'backoffice:message_list' %}" class="admin-nav-link {% block active_messages %}{% endblock %}">
             <i class="bi bi-chat-dots"></i>
             <span>Messages clients</span>
         </a>
 
-        <a href="#" class="admin-nav-link">
+        <a href="{% url 'backoffice:client_list' %}" class="admin-nav-link {% block active_clients %}{% endblock %}">
             <i class="bi bi-people"></i>
             <span>Clients</span>
         </a>
 
-        <a href="#" class="admin-nav-link">
+        <a href="{% url 'backoffice:vehicle_list' %}" class="admin-nav-link {% block active_vehicles %}{% endblock %}">
             <i class="bi bi-car-front"></i>
             <span>Véhicules</span>
         </a>
 
-        <a href="#" class="admin-nav-link">
+        <a href="{% url 'backoffice:dossier_list' %}?status=approved" class="admin-nav-link">
             <i class="bi bi-check2-circle"></i>
             <span>Dossiers validés</span>
         </a>
 
-        <a href="#" class="admin-nav-link">
-            <i class="bi bi-gear"></i>
-            <span>Paramètres</span>
-        </a>
     </nav>
 </aside>
 

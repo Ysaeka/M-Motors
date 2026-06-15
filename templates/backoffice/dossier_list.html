@@ -1,8 +1,8 @@
 {% extends "backoffice/base_backoffice.html" %}
 {% load humanize %}
 
-{% block backoffice_title %}Demandes en cours{% endblock %}
-{% block backoffice_page_title %}Demandes en cours{% endblock %}
+{% block backoffice_title %}{{ page_title }}{% endblock %}
+{% block backoffice_page_title %}{{ page_title }}{% endblock %}
 {% block active_dossiers %}active{% endblock %}
 
 {% block backoffice_content %}
@@ -43,7 +43,7 @@
 <div class="admin-card">
     <div class="admin-card-header">
         <div>
-            <h2 class="admin-card-title">Dossiers achat / location</h2>
+            <h2 class="admin-card-title">{{ page_title }}</h2>
             <p class="admin-page-label">
                 Visualisez les demandes clients avant instruction, validation ou refus.
             </p>
