@@ -58,6 +58,7 @@ def dossier_detail(request, pk):
             "options",
             "documents",
             "status_history",
+            "advisor_messages",
         ),
         pk=pk,
         customer=request.user,
@@ -119,6 +120,7 @@ def dossier_detail(request, pk):
             "estimated_location_total": estimated_location_total,
             "purchase_option_estimate": purchase_option_estimate,
             "advisor_message_form": advisor_message_form,
+            "advisor_messages": dossier.advisor_messages.all(),
         },
     )
 

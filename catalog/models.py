@@ -31,7 +31,11 @@ class Vehicle(models.Model):
     model = models.CharField(max_length=100)
     trim = models.CharField(max_length=100, blank=True)
     category = models.CharField(max_length=100, blank=True)
-    image = models.CharField(max_length=255, blank=True)
+    image = models.ImageField(
+        upload_to="vehicles/",
+        max_length=255,
+        blank=True,
+    )
     year = models.PositiveIntegerField()
     mileage = models.PositiveIntegerField()
     fuel_type = models.CharField(max_length=20, choices=FuelType.choices)

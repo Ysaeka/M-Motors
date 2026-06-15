@@ -61,7 +61,7 @@
             <div class="vehicle-detail-image-wrapper h-100">
               {% if vehicle.image %}
                 <img
-                  src="{% static vehicle.image %}"
+                  src="{% if vehicle.image.name|slice:':4' == 'img/' %}{% static vehicle.image.name %}{% else %}{{ vehicle.image.url }}{% endif %}"
                   alt="{{ vehicle.brand }} {{ vehicle.model }}"
                   class="vehicle-detail-image img-fluid"
                 />

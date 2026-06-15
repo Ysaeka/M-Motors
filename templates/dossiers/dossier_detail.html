@@ -4,263 +4,312 @@
 {% block title %}Dossier #{{ dossier.id }} - M Motors{% endblock %}
 
 {% block content %}
+
 <section class="py-5">
-  <div class="container-fluid px-4 px-lg-5">
-    <div class="mb-4">
-      <a href="{% url 'accounts:espace_client' %}" class="btn btn-back">
-        ← Retour à mon espace client
-      </a>
-    </div>
+    <div class="container-fluid px-4 px-lg-5">
+        <div class="mb-4">
+            <a href="{% url 'accounts:espace_client' %}" class="btn btn-back">
+                ← Retour à mon espace client
+            </a>
+        </div>
 
+```
     <article class="card border-0 shadow-sm vehicle-detail-card">
-      <div class="card-body p-4 p-lg-5">
-        <span class="vehicle-badge">
-          {{ dossier.get_status_display }}
-        </span>
+        <div class="card-body p-4 p-lg-5">
+            <span class="vehicle-badge">
+                {{ dossier.get_status_display }}
+            </span>
 
-        <h1 class="vehicle-detail-title mt-3 mb-2">
-          Dossier #{{ dossier.id }}
-        </h1>
-
-        <p class="vehicle-list-text mb-4">
-          Demande : {{ dossier.get_application_type_display }}<br>
-          Créée le {{ dossier.created_at|date:"d/m/Y à H:i" }}<br>
-          Dernière mise à jour le {{ dossier.updated_at|date:"d/m/Y à H:i" }}
-        </p>
-
-        <h2 class="vehicle-list-title mb-3">
-          {{ dossier.vehicle.brand }} {{ dossier.vehicle.model }} {{ dossier.vehicle.year }}
-        </h2>
-
-        {% if dossier.application_type == "lld" %}
-          <div class="alert alert-light border mb-4">
-            <h3 class="vehicle-list-title mb-3">
-              Configurer votre location avec option d’achat
-            </h3>
+            <h1 class="vehicle-detail-title mt-3 mb-2">
+                Dossier #{{ dossier.id }}
+            </h1>
 
             <p class="vehicle-list-text mb-4">
-              Choisissez la durée de votre location. Les services liés à la LLD sont inclus
-              dans l’abonnement.
+                Demande : {{ dossier.get_application_type_display }}<br>
+                Créée le {{ dossier.created_at|date:"d/m/Y à H:i" }}<br>
+                Dernière mise à jour le {{ dossier.updated_at|date:"d/m/Y à H:i" }}
             </p>
 
-            <form method="post" class="option-auto-submit-form">
-              {% csrf_token %}
+            <h2 class="vehicle-list-title mb-3">
+                {{ dossier.vehicle.brand }} {{ dossier.vehicle.model }} {{ dossier.vehicle.year }}
+            </h2>
 
-              <h4 class="vehicle-list-title mb-3">
-                Durée de la location
-              </h4>
-
-              <div class="row g-3 mb-4">
-                {% for value, label in dossier.LLDDuration.choices %}
-                  <div class="col-md-2 col-6">
-                    <label class="option-choice-card option-duration-card">
-                      <input
-                        type="radio"
-                        name="lld_duration_months"
-                        value="{{ value }}"
-                        class="option-auto-submit"
-                        {% if dossier.lld_duration_months == value %}checked{% endif %}
-                      >
-
-                      <span>
-                        <strong>{{ label }}</strong>
-                      </span>
-                    </label>
-                  </div>
-                {% endfor %}
-              </div>
-            </form>
-
-            {% if lld_included_options %}
-              <h4 class="vehicle-list-title mb-3">
-                Services inclus dans l’abonnement
-              </h4>
-
-              <div class="row g-3 mb-4">
-                {% for option in lld_included_options %}
-                  <div class="col-md-6">
-                    <div class="feature-item">
-                      <i class="bi bi-check-circle-fill"></i>
-                      <span>
-                        <strong>{{ option.name }}</strong><br>
-                        <small>Inclus dans l’abonnement location</small>
-                      </span>
-                    </div>
-                  </div>
-                {% endfor %}
-              </div>
-            {% endif %}
-
-            <div class="alert alert-white border mb-0">
-              <h4 class="vehicle-list-title mb-3">
-                Récapitulatif estimatif
-              </h4>
-
-              <p class="vehicle-list-text mb-2">
-                Durée choisie :
-                <strong>
-                  {% if dossier.lld_duration_months %}
-                    {{ dossier.lld_duration_months }} mois
-                  {% else %}
-                    Non renseignée
-                  {% endif %}
-                </strong>
-              </p>
-
-              <p class="vehicle-list-text mb-2">
-                Mensualité location :
-                <strong>{{ vehicle_monthly_price|floatformat:2 }} €/mois</strong>
-              </p>
-
-              <p class="vehicle-list-text mb-2">
-                Total estimé pendant la location :
-                <strong>{{ estimated_location_total|floatformat:2 }} €</strong>
-              </p>
-
-              <p class="vehicle-list-text mb-0">
-                Option d’achat estimée en fin de contrat :
-                <strong>
-                  {% if purchase_option_estimate is not None %}
-                    {{ purchase_option_estimate|floatformat:2 }} €
-                  {% else %}
-                    À définir par M-Motors
-                  {% endif %}
-                </strong>
-              </p>
-            </div>
-          </div>
-        {% endif %}
-
-        <div class="alert alert-light border mb-4">
-          <h3 class="vehicle-list-title mb-3">
-            Suivi de votre dossier
-          </h3>
-
-          <p class="vehicle-list-text mb-3">
-            {{ dossier.status_message }}
-          </p>
-
-          {% if dossier.status_history.all %}
-            <div class="dossier-timeline">
-              {% for history in dossier.status_history.all reversed %}
-                <div class="dossier-timeline-item">
-                  <div class="dossier-timeline-dot"></div>
-
-                  <div>
-                    <p class="mb-1">
-                      <strong>{{ history.created_at|date:"d/m/Y à H:i" }}</strong>
-                    </p>
-
-                    <p class="mb-0 vehicle-list-text">
-                      {% if history.comment %}
-                        {{ history.comment }}
-                      {% else %}
-                        Statut mis à jour : {{ history.get_new_status_display }}
-                      {% endif %}
-                    </p>
-                  </div>
-                </div>
-              {% endfor %}
-            </div>
-          {% else %}
-            <p class="vehicle-list-text mb-0">
-              Aucun historique disponible pour le moment.
-            </p>
-          {% endif %}
-        </div>
-
-        <div id="contact-conseiller" class="alert alert-white border mb-4">
-            <div class="d-flex flex-column flex-md-row justify-content-between gap-3 align-items-md-center">
-                <div>
-                    <h3 class="vehicle-list-title mb-2">
-                        <i class="bi bi-chat-dots-fill me-2"></i>
-                        Besoin de contacter un conseiller ?
+            {% if dossier.application_type == "lld" %}
+                <div class="alert alert-light border mb-4">
+                    <h3 class="vehicle-list-title mb-3">
+                        Configurer votre location avec option d’achat
                     </h3>
 
-                    <p class="vehicle-list-text mb-0">
-                        Vous pouvez envoyer un message à M-Motors concernant ce dossier.
-                        Le numéro de dossier sera automatiquement associé à votre demande.
+                    <p class="vehicle-list-text mb-4">
+                        Choisissez la durée de votre location. Les services liés à la LLD sont inclus
+                        dans l’abonnement.
                     </p>
+
+                    <form method="post" class="option-auto-submit-form">
+                        {% csrf_token %}
+
+                        <h4 class="vehicle-list-title mb-3">
+                            Durée de la location
+                        </h4>
+
+                        <div class="row g-3 mb-4">
+                            {% for value, label in dossier.LLDDuration.choices %}
+                                <div class="col-md-2 col-6">
+                                    <label class="option-choice-card option-duration-card">
+                                        <input
+                                            type="radio"
+                                            name="lld_duration_months"
+                                            value="{{ value }}"
+                                            class="option-auto-submit"
+                                            {% if dossier.lld_duration_months == value %}checked{% endif %}
+                                        >
+
+                                        <span>
+                                            <strong>{{ label }}</strong>
+                                        </span>
+                                    </label>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </form>
+
+                    {% if lld_included_options %}
+                        <h4 class="vehicle-list-title mb-3">
+                            Services inclus dans l’abonnement
+                        </h4>
+
+                        <div class="row g-3 mb-4">
+                            {% for option in lld_included_options %}
+                                <div class="col-md-6">
+                                    <div class="feature-item">
+                                        <i class="bi bi-check-circle-fill"></i>
+                                        <span>
+                                            <strong>{{ option.name }}</strong><br>
+                                            <small>Inclus dans l’abonnement location</small>
+                                        </span>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+
+                    <div class="alert alert-white border mb-0">
+                        <h4 class="vehicle-list-title mb-3">
+                            Récapitulatif estimatif
+                        </h4>
+
+                        <p class="vehicle-list-text mb-2">
+                            Durée choisie :
+                            <strong>
+                                {% if dossier.lld_duration_months %}
+                                    {{ dossier.lld_duration_months }} mois
+                                {% else %}
+                                    Non renseignée
+                                {% endif %}
+                            </strong>
+                        </p>
+
+                        <p class="vehicle-list-text mb-2">
+                            Mensualité location :
+                            <strong>{{ vehicle_monthly_price|floatformat:2 }} €/mois</strong>
+                        </p>
+
+                        <p class="vehicle-list-text mb-2">
+                            Total estimé pendant la location :
+                            <strong>{{ estimated_location_total|floatformat:2 }} €</strong>
+                        </p>
+
+                        <p class="vehicle-list-text mb-0">
+                            Option d’achat estimée en fin de contrat :
+                            <strong>
+                                {% if purchase_option_estimate is not None %}
+                                    {{ purchase_option_estimate|floatformat:2 }} €
+                                {% else %}
+                                    À définir par M-Motors
+                                {% endif %}
+                            </strong>
+                        </p>
+                    </div>
                 </div>
-
-                <button
-                class="btn btn-detail"
-                type="button"
-                data-bs-toggle="collapse"
-                data-bs-target="#advisor-message-form"
-                aria-expanded="false"
-                aria-controls="advisor-message-form"
-                >
-                Contacter un conseiller
-                </button>
-            </div>
-
-            <div class="collapse mt-4" id="advisor-message-form">
-                <form method="post">
-                {% csrf_token %}
-
-                <input type="hidden" name="advisor_message_submit" value="1">
-
-                <div class="mb-3">
-                    <label for="{{ advisor_message_form.subject.id_for_label }}" class="form-label">
-                    Sujet
-                    </label>
-                    {{ advisor_message_form.subject }}
-                    {{ advisor_message_form.subject.errors }}
-                </div>
-
-                <div class="mb-3">
-                    <label for="{{ advisor_message_form.message.id_for_label }}" class="form-label">
-                    Votre message
-                    </label>
-                    {{ advisor_message_form.message }}
-                    {{ advisor_message_form.message.errors }}
-                </div>
-
-                <button type="submit" class="btn btn-detail">
-                    Envoyer mon message
-                </button>
-                </form>
-            </div>
-        </div>
-
-        {% if dossier.status == "draft" %}
-          <div class="alert alert-light border mb-0">
-            Votre demande est enregistrée en brouillon. Cliquez sur “Compléter mon dossier”
-            pour ajouter vos justificatifs et finaliser votre demande de financement.
-          </div>
-
-          {% if dossier.application_type == "lld" and not dossier.lld_duration_months %}
-            <div class="alert alert-warning mt-3 mb-0">
-              Veuillez choisir une durée de location avant de compléter votre dossier.
-            </div>
-          {% endif %}
-
-          <div class="d-flex flex-column flex-md-row gap-3 mt-4">
-            {% if dossier.application_type == "lld" and not dossier.lld_duration_months %}
-              <button type="button" class="btn btn-detail flex-fill" disabled>
-                Compléter mon dossier
-              </button>
-            {% else %}
-              <a href="{% url 'complete_dossier' dossier.pk %}" class="btn btn-detail flex-fill">
-                Compléter mon dossier
-              </a>
             {% endif %}
 
-            <form method="post" action="{% url 'delete_dossier' dossier.pk %}" class="flex-fill">
-              {% csrf_token %}
-              <button type="submit" class="btn btn-outline-danger w-100">
-                Supprimer ce brouillon
-              </button>
-            </form>
-          </div>
-        {% else %}
-          <div class="alert alert-light border mb-0">
-            Votre dossier a été soumis. Vous pouvez suivre son avancement depuis votre espace client.
-          </div>
-        {% endif %}
-      </div>
+            <div class="alert alert-light border mb-4">
+                <h3 class="vehicle-list-title mb-3">
+                    Suivi de votre dossier
+                </h3>
+
+                <p class="vehicle-list-text mb-3">
+                    {{ dossier.status_message }}
+                </p>
+
+                {% if dossier.status_history.all %}
+                    <div class="dossier-timeline">
+                        {% for history in dossier.status_history.all reversed %}
+                            <div class="dossier-timeline-item">
+                                <div class="dossier-timeline-dot"></div>
+
+                                <div>
+                                    <p class="mb-1">
+                                        <strong>{{ history.created_at|date:"d/m/Y à H:i" }}</strong>
+                                    </p>
+
+                                    <p class="mb-0 vehicle-list-text">
+                                        {% if history.comment %}
+                                            {{ history.comment }}
+                                        {% else %}
+                                            Statut mis à jour : {{ history.get_new_status_display }}
+                                        {% endif %}
+                                    </p>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="vehicle-list-text mb-0">
+                        Aucun historique disponible pour le moment.
+                    </p>
+                {% endif %}
+            </div>
+
+            <div id="contact-conseiller" class="alert alert-white border mb-4">
+                <div class="d-flex flex-column flex-md-row justify-content-between gap-3 align-items-md-center">
+                    <div>
+                        <h3 class="vehicle-list-title mb-2">
+                            <i class="bi bi-chat-dots-fill me-2"></i>
+                            Besoin de contacter un conseiller ?
+                        </h3>
+
+                        <p class="vehicle-list-text mb-0">
+                            Vous pouvez envoyer un message à M-Motors concernant ce dossier.
+                            Le numéro de dossier sera automatiquement associé à votre demande.
+                        </p>
+                    </div>
+
+                    <button
+                        class="btn btn-detail"
+                        type="button"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#advisor-message-form"
+                        aria-expanded="false"
+                        aria-controls="advisor-message-form"
+                    >
+                        Contacter un conseiller
+                    </button>
+                </div>
+
+                <div class="collapse mt-4" id="advisor-message-form">
+                    <form method="post">
+                        {% csrf_token %}
+
+                        <input type="hidden" name="advisor_message_submit" value="1">
+
+                        <div class="mb-3">
+                            <label for="{{ advisor_message_form.subject.id_for_label }}" class="form-label">
+                                Sujet
+                            </label>
+                            {{ advisor_message_form.subject }}
+                            {{ advisor_message_form.subject.errors }}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ advisor_message_form.message.id_for_label }}" class="form-label">
+                                Votre message
+                            </label>
+                            {{ advisor_message_form.message }}
+                            {{ advisor_message_form.message.errors }}
+                        </div>
+
+                        <button type="submit" class="btn btn-detail">
+                            Envoyer mon message
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            {% if advisor_messages %}
+                <div class="alert alert-white border mb-4">
+                    <h3 class="vehicle-list-title mb-3">
+                        <i class="bi bi-chat-left-text-fill me-2"></i>
+                        Mes échanges avec M-Motors
+                    </h3>
+
+                    {% for message in advisor_messages %}
+                        <div class="border rounded p-3 mb-3 bg-light">
+                            <p class="mb-1">
+                                <strong>{{ message.subject }}</strong>
+                            </p>
+
+                            <p class="vehicle-list-text mb-2">
+                                {{ message.message|linebreaksbr }}
+                            </p>
+
+                            <p class="vehicle-list-text text-uppercase small mb-3">
+                                Envoyé le {{ message.created_at|date:"d/m/Y à H:i" }}
+                            </p>
+
+                            {% if message.advisor_response %}
+                                <div class="border rounded p-3 bg-white">
+                                    <p class="mb-1">
+                                        <strong>Réponse de M-Motors</strong>
+                                    </p>
+
+                                    <p class="vehicle-list-text mb-2">
+                                        {{ message.advisor_response|linebreaksbr }}
+                                    </p>
+
+                                    <p class="vehicle-list-text text-uppercase small mb-0">
+                                        Répondu le {{ message.responded_at|date:"d/m/Y à H:i" }}
+                                    </p>
+                                </div>
+                            {% else %}
+                                <div class="alert alert-light border mb-0">
+                                    Votre message est en attente de réponse.
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            {% if dossier.status == "draft" %}
+                <div class="alert alert-light border mb-0">
+                    Votre demande est enregistrée en brouillon. Cliquez sur “Compléter mon dossier”
+                    pour ajouter vos justificatifs et finaliser votre demande de financement.
+                </div>
+
+                {% if dossier.application_type == "lld" and not dossier.lld_duration_months %}
+                    <div class="alert alert-warning mt-3 mb-0">
+                        Veuillez choisir une durée de location avant de compléter votre dossier.
+                    </div>
+                {% endif %}
+
+                <div class="d-flex flex-column flex-md-row gap-3 mt-4">
+                    {% if dossier.application_type == "lld" and not dossier.lld_duration_months %}
+                        <button type="button" class="btn btn-detail flex-fill" disabled>
+                            Compléter mon dossier
+                        </button>
+                    {% else %}
+                        <a href="{% url 'complete_dossier' dossier.pk %}" class="btn btn-detail flex-fill">
+                            Compléter mon dossier
+                        </a>
+                    {% endif %}
+
+                    <form method="post" action="{% url 'delete_dossier' dossier.pk %}" class="flex-fill">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-outline-danger w-100">
+                            Supprimer ce brouillon
+                        </button>
+                    </form>
+                </div>
+            {% else %}
+                <div class="alert alert-light border mb-0">
+                    Votre dossier a été soumis. Vous pouvez suivre son avancement depuis votre espace client.
+                </div>
+            {% endif %}
+        </div>
     </article>
-  </div>
+</div>
+```
+
 </section>
 {% endblock %}

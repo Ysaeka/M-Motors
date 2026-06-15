@@ -1,0 +1,88 @@
+{% extends "backoffice/base_backoffice.html" %}
+
+{% block backoffice_title %}Clients{% endblock %}
+{% block backoffice_page_title %}Clients{% endblock %}
+{% block active_clients %}active{% endblock %}
+
+{% block backoffice_content %}
+<div class="row row-cols-1 row-cols-md-3 g-4 mb-4">
+    <div class="col">
+        <div class="admin-kpi-card h-100">
+            <p class="admin-kpi-label">Clients</p>
+            <h2 class="admin-kpi-value">{{ total_clients }}</h2>
+            <span class="admin-kpi-trend neutral">Avec dossier</span>
+        </div>
+    </div>
+</div>
+
+<div class="admin-card">
+    <div class="admin-card-header">
+        <div>
+            <h2 class="admin-card-title">Clients liés aux dossiers</h2>
+            <p class="admin-page-label">
+                Consultez les clients ayant effectué une demande d’achat ou de location.
+            </p>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table admin-table align-middle">
+            <thead>
+                <tr>
+                    <th>Client</th>
+                    <th>Email</th>
+                    <th>Nombre de dossiers</th>
+                    <th>Dernier véhicule</th>
+                    <th>Dernier dossier</th>
+                    <th></th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for item in clients %}
+                    <tr>
+                        <td>
+                            {{ item.customer.get_full_name|default:item.customer.username }}
+                        </td>
+
+                        <td>
+                            {{ item.customer.email|default:"—" }}
+                        </td>
+
+                        <td>
+                            {{ item.dossier_count }}
+                        </td>
+
+                        <td>
+                            {{ item.last_dossier.vehicle.brand }} {{ item.last_dossier.vehicle.model }}
+                        </td>
+
+                        <td>
+                            #{{ item.last_dossier.id }}
+                            <br>
+                            <span class="admin-page-label">
+                                {{ item.last_dossier.updated_at|date:"d/m/Y à H:i" }}
+                            </span>
+                        </td>
+
+                        <td>
+                            <a
+                                href="{% url 'backoffice:dossier_detail' item.last_dossier.id %}"
+                                class="admin-table-link"
+                            >
+                                Voir dernier dossier
+                            </a>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="6">
+                            Aucun client avec dossier pour le moment.
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
