@@ -1,5 +1,7 @@
+from functools import wraps
 from django.contrib import messages as django_messages
-from django.contrib.admin.views.decorators import staff_member_required
+from django.contrib.auth.decorators import login_required
+from django.core.exceptions import PermissionDenied
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.core.mail import send_mail
@@ -11,7 +13,20 @@ from dossiers.models import Dossier, DossierStatusHistory, Document, DossierAdvi
 from .forms import VehicleForm
 
 
-@staff_member_required
+def backoffice_required(view_func):
+    @wraps(view_func)
+    def wrapper(request, *args, **kwargs):
+        user = request.user
+        is_commercial = user.groups.filter(name="Commercial").exists()
+
+        if user.is_superuser or is_commercial:
+            return view_func(request, *args, **kwargs)
+
+        raise PermissionDenied
+
+    return login_required(wrapper)
+
+@backoffice_required
 def dashboard(request):
     recent_dossiers = (
         Dossier.objects.select_related("customer", "vehicle")
@@ -51,7 +66,7 @@ def dashboard(request):
 
     return render(request, "backoffice/dashboard.html", context)
 
-@staff_member_required
+@backoffice_required
 def dossier_list(request):
     status_filter = request.GET.get("status")
 
@@ -89,7 +104,7 @@ def dossier_list(request):
 
     return render(request, "backoffice/dossier_list.html", context)
 
-@staff_member_required
+@backoffice_required
 def message_list(request):
     messages = (
         DossierAdvisorMessage.objects.select_related(
@@ -114,7 +129,7 @@ def message_list(request):
 
     return render(request, "backoffice/message_list.html", context)
 
-@staff_member_required
+@backoffice_required
 def client_list(request):
     dossiers = (
         Dossier.objects.select_related("customer", "vehicle")
@@ -144,7 +159,7 @@ def client_list(request):
 
     return render(request, "backoffice/client_list.html", context)
 
-@staff_member_required
+@backoffice_required
 def vehicle_list(request):
     sort = request.GET.get("sort", "brand")
     direction = request.GET.get("direction", "asc")
@@ -183,7 +198,7 @@ def vehicle_list(request):
 
     return render(request, "backoffice/vehicle_list.html", context)
 
-@staff_member_required
+@backoffice_required
 def vehicle_create(request):
     if request.method == "POST":
         form = VehicleForm(request.POST, request.FILES)
@@ -207,7 +222,7 @@ def vehicle_create(request):
     return render(request, "backoffice/vehicle_form.html", context)
 
 
-@staff_member_required
+@backoffice_required
 def vehicle_update(request, pk):
     vehicle = get_object_or_404(Vehicle, pk=pk)
 
@@ -254,7 +269,7 @@ def vehicle_update(request, pk):
     return render(request, "backoffice/vehicle_form.html", context)
 
 
-@staff_member_required
+@backoffice_required
 def vehicle_switch_offer(request, pk, offer_type):
     vehicle = get_object_or_404(Vehicle, pk=pk)
 
@@ -283,7 +298,7 @@ def vehicle_switch_offer(request, pk, offer_type):
     return redirect("backoffice:vehicle_list")
 
 
-@staff_member_required
+@backoffice_required
 def dossier_detail(request, pk):
     dossier = get_object_or_404(
         Dossier.objects.select_related("customer", "vehicle").prefetch_related(

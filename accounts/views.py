@@ -11,6 +11,9 @@ from .forms import ClientProfileForm, ClientSignUpForm
 
 @login_required
 def espace_client(request):
+    if request.user.is_superuser or request.user.groups.filter(name="Commercial").exists():
+        return redirect("backoffice:dashboard")
+
     profile, _ = ClientProfile.objects.get_or_create(user=request.user)
 
     dossiers = (
