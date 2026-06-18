@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+
+{% block title %}Contact - M Motors{% endblock %}
+
+{% block content %}
+<section class="contact-page py-5">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h1 class="section-title">Contactez M Motors</h1>
+            <p class="section-subtitle">
+                Une question sur un véhicule, un dossier ou une demande de financement ?
+                Notre équipe vous accompagne.
+            </p>
+        </div>
+
+        <div class="row g-4 align-items-stretch">
+            <div class="col-lg-5">
+                <div class="contact-card h-100">
+                    <h2>Nos coordonnées</h2>
+
+                    <div class="contact-info">
+                        <p>
+                            <i class="bi bi-geo-alt"></i>
+                            <span>
+                                <strong>Adresse</strong><br>
+                                28 avenue des véhicules<br>
+                                84000 Avignon
+                            </span>
+                        </p>
+
+                        <p>
+                            <i class="bi bi-telephone"></i>
+                            <span>
+                                <strong>Téléphone</strong><br>
+                                04 00 00 00 00
+                            </span>
+                        </p>
+
+                        <p>
+                            <i class="bi bi-envelope"></i>
+                            <span>
+                                <strong>Email</strong><br>
+                                contact@m-motors.fr
+                            </span>
+                        </p>
+
+                        <p>
+                            <i class="bi bi-clock"></i>
+                            <span>
+                                <strong>Horaires</strong><br>
+                                Du lundi au vendredi<br>
+                                9h00 - 18h00
+                            </span>
+                        </p>
+                    </div>
+
+                    <div class="contact-socials mt-4">
+                        <h3>Suivez-nous</h3>
+                        <div class="d-flex gap-3">
+                            <a href="#" aria-label="Facebook"><i class="bi bi-facebook"></i></a>
+                            <a href="#" aria-label="Instagram"><i class="bi bi-instagram"></i></a>
+                            <a href="#" aria-label="LinkedIn"><i class="bi bi-linkedin"></i></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-7">
+                <div class="contact-card h-100">
+                    <h2>Formulaire de contact</h2>
+
+                    <form method="post" class="contact-form">
+                        {% csrf_token %}
+
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="name" class="form-label">Nom</label>
+                                <input type="text" id="name" name="name" class="form-control" required>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="email" class="form-label">Email</label>
+                                <input type="email" id="email" name="email" class="form-control" required>
+                            </div>
+
+                            <div class="col-12">
+                                <label for="phone" class="form-label">Téléphone</label>
+                                <input type="text" id="phone" name="phone" class="form-control">
+                            </div>
+
+                            <div class="col-12">
+                                <label for="message" class="form-label">Message</label>
+                                <textarea id="message" name="message" rows="6" class="form-control" required></textarea>
+                            </div>
+
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-contact">
+                                    Envoyer ma demande
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

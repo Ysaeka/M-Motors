@@ -2771,3 +2771,23 @@ textarea.finance-input {
     min-height: auto;
   }
 }
+
+/* PAGE CONTACT */
+
+.btn-contact {
+    background-color: #2fb58f;
+    color: #ffffff;
+    border: none;
+    border-radius: 12px;
+    padding: 0.85rem 2rem;
+    font-weight: 700;
+    box-shadow: 0 10px 20px rgba(47, 181, 143, 0.25);
+    transition: all 0.2s ease-in-out;
+}
+
+.btn-contact:hover {
+    background-color: #249f7d;
+    color: #ffffff;
+    transform: translateY(-2px);
+    box-shadow: 0 14px 24px rgba(47, 181, 143, 0.35);
+}

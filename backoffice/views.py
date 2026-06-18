@@ -1,4 +1,5 @@
 from functools import wraps
+from django.conf import settings
 from django.contrib import messages as django_messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
@@ -25,6 +26,63 @@ def backoffice_required(view_func):
         raise PermissionDenied
 
     return login_required(wrapper)
+
+def build_dossier_url(request, dossier):
+    path = reverse("dossier_detail", args=[dossier.pk])
+
+    if settings.SITE_URL:
+        return f"{settings.SITE_URL.rstrip('/')}{path}"
+
+    return request.build_absolute_uri(path)
+
+def notify_customer_status_change(request, dossier):
+    customer_email = dossier.customer.email
+
+    if not customer_email:
+        return
+
+    dossier_url = build_dossier_url(request, dossier)
+
+    send_mail(
+        subject="M Motors - Mise à jour de votre dossier",
+        message=(
+            "Bonjour,\n\n"
+            "Le statut de votre dossier M Motors a été mis à jour.\n\n"
+            f"Nouveau statut : {dossier.get_status_display()}\n\n"
+            "Vous pouvez consulter le détail de votre dossier depuis votre espace client :\n"
+            f"{dossier_url}\n\n"
+            "Cordialement,\n"
+            "L’équipe M Motors"
+        ),
+        from_email=None,
+        recipient_list=[customer_email],
+        fail_silently=False,
+    )
+
+def notify_customer_document_rejected(request, dossier, document):
+    customer_email = dossier.customer.email
+
+    if not customer_email:
+        return
+
+    dossier_url = build_dossier_url(request, dossier)
+
+    send_mail(
+        subject="M Motors - Document refusé",
+        message=(
+            "Bonjour,\n\n"
+            "Un document ajouté à votre dossier M Motors a été refusé.\n\n"
+            f"Document concerné : {document.get_document_type_display()}\n"
+            f"Motif : {document.rejection_reason or 'Document non conforme.'}\n\n"
+            "Vous pouvez consulter votre dossier et déposer un nouveau document depuis votre espace client :\n"
+            f"{dossier_url}\n\n"
+            "Cordialement,\n"
+            "L’équipe M Motors"
+        ),
+        from_email=None,
+        recipient_list=[customer_email],
+        fail_silently=False,
+    )
 
 @backoffice_required
 def dashboard(request):
@@ -360,9 +418,7 @@ def dossier_detail(request, pk):
                 customer_email = dossier.customer.email
 
                 if customer_email:
-                    client_space_url = request.build_absolute_uri(
-                        reverse("dossier_detail", args=[dossier.pk])
-                    )
+                    client_space_url = build_dossier_url(request, dossier)
 
                     send_mail(
                         subject="Une réponse a été apportée à votre message",
@@ -399,6 +455,7 @@ def dossier_detail(request, pk):
                 document.validation_status = Document.ValidationStatus.REJECTED
                 document.rejection_reason = "Document refusé depuis le back-office."
                 django_messages.success(request, "Le document a bien été refusé.")
+                notify_customer_document_rejected(request, dossier, document)
 
             document.validated_at = timezone.now()
             document.save(
@@ -439,6 +496,8 @@ def dossier_detail(request, pk):
             changed_by=request.user,
             comment=comment,
         )
+
+        notify_customer_status_change(request, dossier)
 
         django_messages.success(request, "Le statut du dossier a bien été mis à jour.")
         return redirect("backoffice:dossier_detail", pk=dossier.pk)
