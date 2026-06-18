@@ -3,10 +3,11 @@ from django.urls import include, path
 from django.conf import settings
 from django.conf.urls.static import static
 
-from core.views import home, healthcheck
+from core.views import contact, home, healthcheck
 
 urlpatterns = [
     path("", home, name="home"),
+    path("contact/", contact, name="contact"),
     path("health/", healthcheck, name="healthcheck"),
     path("catalog/", include("catalog.urls")),
     path("back-office/", include("backoffice.urls")),
