@@ -1,6 +1,6 @@
 from django.conf import settings
 from django.contrib import messages
-from django.core.mail import send_mail
+from core.email import send_brevo_email
 from django.http import JsonResponse
 from django.shortcuts import redirect, render
 
@@ -36,7 +36,7 @@ def contact(request):
         phone = request.POST.get("phone", "").strip()
         message = request.POST.get("message", "").strip()
 
-        send_mail(
+        email_sent = send_brevo_email(
             subject=f"Nouveau message de contact - {name}",
             message=(
                 f"Nom : {name}\n"
@@ -44,10 +44,17 @@ def contact(request):
                 f"Téléphone : {phone or 'Non renseigné'}\n\n"
                 f"Message :\n{message}"
             ),
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[settings.CONTACT_EMAIL],
-            fail_silently=False,
+            recipient_email=settings.CONTACT_EMAIL,
+            recipient_name="M Motors",
         )
+
+        if not email_sent:
+            messages.error(
+                request,
+                "Votre message n’a pas pu être envoyé. Merci de réessayer plus tard.",
+            )
+            return redirect("contact")
+     
 
         messages.success(
             request,

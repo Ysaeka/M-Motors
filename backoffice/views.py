@@ -5,8 +5,9 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
-from django.core.mail import send_mail
 from django.urls import reverse
+
+from core.email import send_brevo_email
 
 from catalog.models import Vehicle
 from dossiers.models import Dossier, DossierStatusHistory, Document, DossierAdvisorMessage
@@ -43,7 +44,7 @@ def notify_customer_status_change(request, dossier):
 
     dossier_url = build_dossier_url(request, dossier)
 
-    send_mail(
+    send_brevo_email(
         subject="M Motors - Mise à jour de votre dossier",
         message=(
             "Bonjour,\n\n"
@@ -54,9 +55,8 @@ def notify_customer_status_change(request, dossier):
             "Cordialement,\n"
             "L’équipe M Motors"
         ),
-        from_email=None,
-        recipient_list=[customer_email],
-        fail_silently=False,
+            recipient_email=customer_email,
+            recipient_name=dossier.customer.get_full_name() or dossier.customer.username,
     )
 
 def notify_customer_document_rejected(request, dossier, document):
@@ -67,7 +67,7 @@ def notify_customer_document_rejected(request, dossier, document):
 
     dossier_url = build_dossier_url(request, dossier)
 
-    send_mail(
+    send_brevo_email(
         subject="M Motors - Document refusé",
         message=(
             "Bonjour,\n\n"
@@ -79,9 +79,8 @@ def notify_customer_document_rejected(request, dossier, document):
             "Cordialement,\n"
             "L’équipe M Motors"
         ),
-        from_email=None,
-        recipient_list=[customer_email],
-        fail_silently=False,
+        recipient_email=customer_email,
+        recipient_name=dossier.customer.get_full_name() or dossier.customer.username,
     )
 
 @backoffice_required
@@ -420,7 +419,7 @@ def dossier_detail(request, pk):
                 if customer_email:
                     client_space_url = build_dossier_url(request, dossier)
 
-                    send_mail(
+                    send_brevo_email(
                         subject="Une réponse a été apportée à votre message",
                         message=(
                             "Bonjour,\n\n"
@@ -431,9 +430,8 @@ def dossier_detail(request, pk):
                             "Cordialement,\n"
                             "L’équipe M Motors"
                         ),
-                        from_email=None,
-                        recipient_list=[customer_email],
-                        fail_silently=False,
+                        recipient_email=customer_email,
+                        recipient_name=dossier.customer.get_full_name() or dossier.customer.username,
                     )
 
                 django_messages.success(
