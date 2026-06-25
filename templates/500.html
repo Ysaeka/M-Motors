@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block title %}Erreur serveur - M Motors{% endblock %}
+
+{% block content %}
+<section class="py-5">
+  <div class="container text-center">
+    <h1 class="display-4 fw-bold text-danger">500</h1>
+
+    <h2 class="mb-3">Erreur serveur</h2>
+
+    <p class="text-muted mb-4">
+      Une erreur technique est survenue. Nos équipes ont été informées et travaillent à sa résolution.
+    </p>
+
+    <a href="{% url 'home' %}" class="btn btn-detail">
+      Retour à l’accueil
+    </a>
+  </div>
+</section>
+{% endblock %}
