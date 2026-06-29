@@ -63,3 +63,6 @@ def contact(request):
         return redirect("contact")
 
     return render(request, "pages/contact.html")
+
+def mentions_legales(request):
+    return render(request, "pages/mentions_legales.html")
