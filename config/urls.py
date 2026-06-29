@@ -3,7 +3,7 @@ from django.urls import include, path
 from django.conf import settings
 from django.conf.urls.static import static
 
-from core.views import contact, home, healthcheck
+from core.views import contact, home, healthcheck, mentions_legales
 
 urlpatterns = [
     path("", home, name="home"),
@@ -15,6 +15,7 @@ urlpatterns = [
     path("accounts/", include("django.contrib.auth.urls")),
     path("admin/", admin.site.urls),
     path("dossiers/", include("dossiers.urls")),
+    path("mentions-legales/", mentions_legales, name="mentions_legales"),
 ]
 
 if settings.DEBUG:
