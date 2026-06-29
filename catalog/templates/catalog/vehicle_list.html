@@ -120,12 +120,47 @@
         </form>
       </aside>
 
-      <section class="col-lg-9">
+        <section class="col-lg-9">
         <div class="catalog-topbar d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
-          <div>
-            <h2 class="catalog-title mb-1">Nos véhicules</h2>
-            <p class="catalog-subtitle mb-0">Trouvez l’offre adaptée à votre besoin</p>
-          </div>
+            <div>
+                <h2 class="catalog-title mb-1">Nos véhicules</h2>
+                <p class="catalog-subtitle mb-0">Trouvez l’offre adaptée à votre besoin</p>
+            </div>
+
+            <form method="get" class="d-flex align-items-center gap-2">
+                {% if selected_offer_type %}
+                <input type="hidden" name="offer_type" value="{{ selected_offer_type }}">
+                {% endif %}
+
+                {% if selected_budget_max %}
+                <input type="hidden" name="budget_max" value="{{ selected_budget_max }}">
+                {% endif %}
+
+                {% if selected_brand %}
+                <input type="hidden" name="brand" value="{{ selected_brand }}">
+                {% endif %}
+
+                {% if selected_category %}
+                <input type="hidden" name="category" value="{{ selected_category }}">
+                {% endif %}
+
+                {% for fuel in selected_fuel_types %}
+                <input type="hidden" name="fuel_type" value="{{ fuel }}">
+                {% endfor %}
+
+                {% for gearbox in selected_gearboxes %}
+                <input type="hidden" name="gearbox" value="{{ gearbox }}">
+                {% endfor %}
+
+                <label for="sort" class="form-label mb-0 text-muted">Trier par</label>
+                <select name="sort" id="sort" class="form-select" onchange="this.form.submit()">
+                <option value="newest" {% if selected_sort == "newest" %}selected{% endif %}>Nouveautés</option>
+                <option value="price_sale_asc" {% if selected_sort == "price_sale_asc" %}selected{% endif %}>Prix achat croissant</option>
+                <option value="price_sale_desc" {% if selected_sort == "price_sale_desc" %}selected{% endif %}>Prix achat décroissant</option>
+                <option value="price_monthly_asc" {% if selected_sort == "price_monthly_asc" %}selected{% endif %}>Mensualité croissante</option>
+                <option value="price_monthly_desc" {% if selected_sort == "price_monthly_desc" %}selected{% endif %}>Mensualité décroissante</option>
+                </select>
+            </form>
         </div>
 
         {% if vehicles %}
@@ -234,8 +269,8 @@
               <span>Page {{ page_obj.number }} sur {{ page_obj.paginator.num_pages }}</span>
 
               {% if page_obj.has_next %}
-                <a class="btn btn-outline-secondary" href="?page={{ page_obj.next_page_number }}{% if selected_offer_type %}&offer_type={{ selected_offer_type }}{% endif %}{% if selected_budget_max %}&budget_max={{ selected_budget_max }}{% endif %}{% if selected_brand %}&brand={{ selected_brand }}{% endif %}{% for fuel in selected_fuel_types %}&fuel_type={{ fuel }}{% endfor %}{% for gearbox in selected_gearboxes %}&gearbox={{ gearbox }}{% endfor %}">
-                  Suivant
+                <a class="btn btn-outline-secondary" href="?{{ query_string }}&page={{ page_obj.next_page_number }}">
+                    Suivant
                 </a>
               {% endif %}
             </div>

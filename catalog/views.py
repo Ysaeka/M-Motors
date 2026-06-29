@@ -1,4 +1,5 @@
 from django.core.paginator import Paginator
+from django.db.models import F
 from django.shortcuts import get_object_or_404, render
 
 from dossiers.models import Option
@@ -15,6 +16,7 @@ def vehicle_list(request):
     fuel_types = request.GET.getlist("fuel_type")
     gearboxes = request.GET.getlist("gearbox")
     category = request.GET.get("category")
+    sort = request.GET.get("sort", "newest")
 
     if offer_type in [Vehicle.OfferType.SALE, Vehicle.OfferType.LLD]:
         vehicles = vehicles.filter(offer_type=offer_type)
@@ -22,9 +24,6 @@ def vehicle_list(request):
     if brand:
         vehicles = vehicles.filter(brand=brand)
     
-    if brand:
-        vehicles = vehicles.filter(brand=brand)
-
     if category:
         vehicles = vehicles.filter(category=category)
 
@@ -75,6 +74,22 @@ def vehicle_list(request):
     .order_by("category")
     )
 
+    if sort == "price_sale_asc":
+        vehicles = vehicles.order_by(F("price_sale").asc(nulls_last=True), "-created_at")
+    elif sort == "price_sale_desc":
+        vehicles = vehicles.order_by(F("price_sale").desc(nulls_last=True), "-created_at")
+    elif sort == "price_monthly_asc":
+        vehicles = vehicles.order_by(F("price_monthly").asc(nulls_last=True), "-created_at")
+    elif sort == "price_monthly_desc":
+        vehicles = vehicles.order_by(F("price_monthly").desc(nulls_last=True), "-created_at")
+    else:
+        sort = "newest"
+        vehicles = vehicles.order_by("-created_at")
+
+    query_params = request.GET.copy()
+    query_params.pop("page", None)
+    query_string = query_params.urlencode()
+
     paginator = Paginator(vehicles, 6)
     page_number = request.GET.get("page")
     page_obj = paginator.get_page(page_number)
@@ -97,6 +112,8 @@ def vehicle_list(request):
             "budget_min": budget_min,
             "budget_max_limit": budget_max_limit,
             "budget_step": budget_step,
+            "selected_sort": sort,
+            "query_string": query_string,
         },
     )
 

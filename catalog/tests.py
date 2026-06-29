@@ -43,21 +43,25 @@ class CatalogViewsTests(TestCase):
 
     def test_vehicle_list_returns_200(self):
         response = self.client.get(reverse("vehicle_list"))
+
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "catalog/vehicle_list.html")
 
     def test_vehicle_list_displays_vehicles(self):
         response = self.client.get(reverse("vehicle_list"))
+
         self.assertContains(response, "Peugeot 208 2021")
         self.assertContains(response, "Renault Clio 2022")
 
     def test_vehicle_detail_returns_200(self):
         response = self.client.get(reverse("vehicle_detail", args=[self.vehicle_sale.pk]))
+
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "catalog/vehicle_detail.html")
 
     def test_vehicle_detail_displays_vehicle_data(self):
         response = self.client.get(reverse("vehicle_detail", args=[self.vehicle_sale.pk]))
+
         self.assertContains(response, "Peugeot")
         self.assertContains(response, "208")
 
@@ -75,11 +79,95 @@ class CatalogViewsTests(TestCase):
         self.assertContains(response, "299 €/mois")
         self.assertNotContains(response, "Peugeot 208 2021")
 
-
     def test_vehicle_references_are_hidden_for_public_users(self):
         response = self.client.get(reverse("vehicle_list"))
+
         self.assertNotContains(response, "TEST-SALE-001")
         self.assertNotContains(response, "TEST-LLD-001")
+
+    def test_vehicle_list_sort_by_sale_price_ascending(self):
+        Vehicle.objects.create(
+            reference="TEST-SALE-LOW",
+            brand="Citroën",
+            model="C3",
+            year=2020,
+            mileage=40000,
+            fuel_type=Vehicle.FuelType.GASOLINE,
+            gearbox=Vehicle.GearboxType.MANUAL,
+            price_sale=12000.00,
+            price_monthly=None,
+            offer_type=Vehicle.OfferType.SALE,
+            availability_status=Vehicle.AvailabilityStatus.AVAILABLE,
+        )
+
+        response = self.client.get(
+            reverse("vehicle_list"),
+            {"sort": "price_sale_asc"},
+        )
+
+        vehicles = list(response.context["vehicles"].object_list)
+
+        self.assertEqual(vehicles[0].reference, "TEST-SALE-LOW")
+        self.assertEqual(response.context["selected_sort"], "price_sale_asc")
+
+    def test_vehicle_list_sort_by_sale_price_descending(self):
+        Vehicle.objects.create(
+            reference="TEST-SALE-HIGH",
+            brand="BMW",
+            model="Serie 1",
+            year=2023,
+            mileage=12000,
+            fuel_type=Vehicle.FuelType.GASOLINE,
+            gearbox=Vehicle.GearboxType.AUTOMATIC,
+            price_sale=30000.00,
+            price_monthly=None,
+            offer_type=Vehicle.OfferType.SALE,
+            availability_status=Vehicle.AvailabilityStatus.AVAILABLE,
+        )
+
+        response = self.client.get(
+            reverse("vehicle_list"),
+            {"sort": "price_sale_desc"},
+        )
+
+        vehicles = list(response.context["vehicles"].object_list)
+
+        self.assertEqual(vehicles[0].reference, "TEST-SALE-HIGH")
+        self.assertEqual(response.context["selected_sort"], "price_sale_desc")
+
+    def test_vehicle_list_sort_by_monthly_price_ascending(self):
+        Vehicle.objects.create(
+            reference="TEST-LLD-LOW",
+            brand="Toyota",
+            model="Yaris",
+            year=2023,
+            mileage=10000,
+            fuel_type=Vehicle.FuelType.HYBRID,
+            gearbox=Vehicle.GearboxType.AUTOMATIC,
+            price_sale=None,
+            price_monthly=199.00,
+            offer_type=Vehicle.OfferType.LLD,
+            availability_status=Vehicle.AvailabilityStatus.AVAILABLE,
+        )
+
+        response = self.client.get(
+            reverse("vehicle_list"),
+            {"sort": "price_monthly_asc"},
+        )
+
+        vehicles = list(response.context["vehicles"].object_list)
+
+        self.assertEqual(vehicles[0].reference, "TEST-LLD-LOW")
+        self.assertEqual(response.context["selected_sort"], "price_monthly_asc")
+
+    def test_vehicle_list_invalid_sort_falls_back_to_newest(self):
+        response = self.client.get(
+            reverse("vehicle_list"),
+            {"sort": "unknown"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["selected_sort"], "newest")
 
 
 class VehicleModelTests(TestCase):
@@ -100,6 +188,7 @@ class VehicleModelTests(TestCase):
             offer_type=Vehicle.OfferType.SALE,
             availability_status=Vehicle.AvailabilityStatus.AVAILABLE,
         )
+
         self.assertEqual(str(vehicle), "BMW Serie 1 (MODEL-001)")
 
     def test_vehicle_default_availability_status_is_available(self):
@@ -118,6 +207,7 @@ class VehicleModelTests(TestCase):
             description="Véhicule de test disponibilité",
             offer_type=Vehicle.OfferType.SALE,
         )
+
         self.assertEqual(
             vehicle.availability_status,
             Vehicle.AvailabilityStatus.AVAILABLE,
