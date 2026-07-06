@@ -6,7 +6,7 @@ from django.shortcuts import redirect, render
 
 from catalog.models import Vehicle
 
-
+"""Affiche la page d'accueil avec les marques et catégories disponibles."""
 def home(request):
     brands = Vehicle.objects.values_list("brand", flat=True).distinct().order_by("brand")
     categories = (
@@ -25,16 +25,20 @@ def home(request):
         },
     )
 
-
+"""Point de contrôle utilisé par le monitoring pour vérifier que l'application répond."""
 def healthcheck(request):
     return JsonResponse({"status": "ok"})
 
+"""Gère l'affichage et l'envoi du formulaire de contact."""
 def contact(request):
     if request.method == "POST":
         name = request.POST.get("name", "").strip()
         email = request.POST.get("email", "").strip()
         phone = request.POST.get("phone", "").strip()
         message = request.POST.get("message", "").strip()
+
+        # Le formulaire contacte l'adresse interne M Motors via Brevo.
+        # Le visiteur reçoit uniquement un message de confirmation à l'écran.
 
         email_sent = send_brevo_email(
             subject=f"Nouveau message de contact - {name}",
@@ -64,5 +68,6 @@ def contact(request):
 
     return render(request, "pages/contact.html")
 
+"""Affiche la page des mentions légales du projet."""
 def mentions_legales(request):
     return render(request, "pages/mentions_legales.html")
