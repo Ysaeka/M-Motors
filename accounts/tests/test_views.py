@@ -1,6 +1,7 @@
+from unittest.mock import patch
+
 from django.contrib.auth import get_user_model
-from django.core import mail
-from django.test import TestCase, override_settings
+from django.test import TestCase
 from django.urls import reverse
 
 
@@ -15,7 +16,7 @@ class ClientAuthViewTests(TestCase):
     - vérifier que les pages importantes répondent correctement ;
     - vérifier que l'inscription fonctionne ;
     - vérifier que l'espace client est protégé ;
-    - vérifier que la réinitialisation de mot de passe envoie bien un email.
+    - vérifier que la réinitialisation de mot de passe utilise bien Brevo.
     """
 
     def test_signup_page_is_accessible(self):
@@ -187,18 +188,16 @@ class ClientAuthViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "registration/password_reset_done.html")
 
-    @override_settings(
-        EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend",
-        DEFAULT_FROM_EMAIL="contact@m-motors.local",
-    )
-    def test_password_reset_sends_email_for_existing_user(self):
+    @patch("accounts.forms.send_brevo_email")
+    def test_password_reset_sends_email_for_existing_user(self, mock_send_brevo_email):
         """
         Si l'email correspond à un utilisateur existant,
-        Django doit générer un email de réinitialisation.
+        Django doit générer un lien sécurisé puis demander l'envoi via Brevo.
 
-        Le backend locmem garde l'email en mémoire pendant le test.
-        Cela permet de vérifier l'envoi sans envoyer de vrai email.
+        On utilise un mock pour éviter d'appeler la vraie API Brevo pendant les tests.
         """
+        mock_send_brevo_email.return_value = True
+
         User.objects.create_user(
             username="clientreset",
             email="clientreset@example.com",
@@ -211,6 +210,11 @@ class ClientAuthViewTests(TestCase):
         )
 
         self.assertRedirects(response, reverse("password_reset_done"))
-        self.assertEqual(len(mail.outbox), 1)
-        self.assertIn("Réinitialisation", mail.outbox[0].subject)
-        self.assertIn("clientreset@example.com", mail.outbox[0].to)
+
+        mock_send_brevo_email.assert_called_once()
+
+        _, kwargs = mock_send_brevo_email.call_args
+
+        self.assertIn("Réinitialisation", kwargs["subject"])
+        self.assertIn("/accounts/reset/", kwargs["message"])
+        self.assertEqual(kwargs["recipient_email"], "clientreset@example.com")
