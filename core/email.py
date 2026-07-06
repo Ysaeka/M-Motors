@@ -5,6 +5,10 @@ from urllib.error import HTTPError, URLError
 from django.conf import settings
 
 
+"""Envoie un email transactionnel via l'API Brevo.
+    Retourne True si l'API accepte la demande d'envoi, sinon False.
+    La fonction ne lève pas d'exception afin de laisser la vue gérer l'affichage d'un message utilisateur adapté.
+    """
 def send_brevo_email(subject, message, recipient_email, recipient_name=""):
     if not settings.BREVO_API_KEY:
         return False
@@ -37,6 +41,7 @@ def send_brevo_email(subject, message, recipient_email, recipient_name=""):
         method="POST",
     )
 
+    # Le timeout évite de bloquer la requête utilisateur si l'API Brevo ne répond pas.
     try:
         with url_request.urlopen(request, timeout=10) as response:
             return 200 <= response.status < 300

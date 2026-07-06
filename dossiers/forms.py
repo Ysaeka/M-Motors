@@ -5,7 +5,10 @@ from django import forms
 from .models import Dossier
 from .models import DossierAdvisorMessage
 
-
+"""Formulaire de complétion des informations personnelles du dossier client.
+   Il centralise les règles métier nécessaires avant le traitement d'une demande :
+    majorité du client, adresse complète, consentement RGPD et cohérence financière.
+"""
 class DossierCompletionForm(forms.ModelForm):
     class Meta:
         model = Dossier
@@ -135,6 +138,8 @@ class DossierCompletionForm(forms.ModelForm):
                 "Vous devez accepter le traitement de vos données pour continuer.",
             )
 
+        # Certaines informations financières ne sont obligatoires que selon la situation déclarée par le client.
+
         if housing_status == Dossier.HousingStatus.TENANT and monthly_rent in [None, ""]:
             self.add_error(
                 "monthly_rent",
@@ -171,6 +176,7 @@ class DocumentUploadForm(forms.Form):
     def __init__(self, *args, allowed_document_types=None, **kwargs):
         super().__init__(*args, **kwargs)
 
+        # Les types autorisés dépendent de l'état du dossier et des documents attendus.
         if allowed_document_types is None:
             allowed_document_types = []
 
@@ -191,6 +197,7 @@ class DocumentUploadForm(forms.Form):
 
         return file
 
+"""Formulaire permettant au client d'envoyer un message à un conseiller."""
 class DossierAdvisorMessageForm(forms.ModelForm):
     class Meta:
         model = DossierAdvisorMessage

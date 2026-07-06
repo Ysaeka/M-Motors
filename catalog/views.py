@@ -7,6 +7,7 @@ from dossiers.models import Option
 from .models import Vehicle
 
 
+"""Affiche le catalogue avec filtres, budget, tri et pagination."""
 def vehicle_list(request):
     vehicles = Vehicle.objects.all().order_by("-created_at")
 
@@ -33,6 +34,8 @@ def vehicle_list(request):
     if gearboxes:
         vehicles = vehicles.filter(gearbox__in=gearboxes)
 
+    # Le filtre budget dépend du type d'offre :
+    # achat = prix de vente maximum, LLD = mensualité maximum.
     if offer_type == Vehicle.OfferType.LLD:
         budget_label = "Mensualité max"
         budget_min = 100
@@ -49,6 +52,7 @@ def vehicle_list(request):
     if not budget_max:
         budget_max = str(default_budget)
 
+    # Si le budget reçu dans l'URL est incohérent, on revient à une valeur par défaut.
     try:
         budget_value = float(budget_max)
 
@@ -74,6 +78,7 @@ def vehicle_list(request):
     .order_by("category")
     )
 
+    # Le tri garde les valeurs nulles en fin de liste pour éviter de mélanger les véhicules achat et LLD lorsqu'un prix n'existe pas.
     if sort == "price_sale_asc":
         vehicles = vehicles.order_by(F("price_sale").asc(nulls_last=True), "-created_at")
     elif sort == "price_sale_desc":
@@ -86,6 +91,7 @@ def vehicle_list(request):
         sort = "newest"
         vehicles = vehicles.order_by("-created_at")
 
+    # On conserve les filtres et le tri lors du changement de page.
     query_params = request.GET.copy()
     query_params.pop("page", None)
     query_string = query_params.urlencode()
@@ -117,10 +123,11 @@ def vehicle_list(request):
         },
     )
 
-
+"""Affiche la fiche détaillée d'un véhicule."""
 def vehicle_detail(request, pk):
     vehicle = get_object_or_404(Vehicle, pk=pk)
 
+    # Les options LLD affichées sont des services inclus dans l'offre et non des options payantes à sélectionner par le client.
     lld_options = Option.objects.none()
     if vehicle.has_lld_options:
         lld_options = Option.objects.filter(

@@ -13,12 +13,15 @@ from decimal import Decimal
 
 from .models import Document, Dossier, DossierStatusHistory, Option
 
-
+# Statuts considérés comme actifs pour éviter de créer plusieurs dossiers en cours pour le même client, le même véhicule et le même type de demande.
 ACTIVE_DOSSIER_STATUSES = [
     Dossier.Status.DRAFT,
     Dossier.Status.SUBMITTED,
     Dossier.Status.UNDER_REVIEW,
 ]
+
+# Les justificatifs attendus dépendent du type de demande.
+# Une LLD nécessite plus de pièces qu'une demande d'achat classique.
 REQUIRED_DOCUMENTS_BY_APPLICATION_TYPE = {
     Dossier.ApplicationType.SALE: [
         Document.DocumentType.ID_CARD,
@@ -35,6 +38,7 @@ REQUIRED_DOCUMENTS_BY_APPLICATION_TYPE = {
     ],
 }
 
+"""Affiche la liste des dossiers appartenant au client connecté."""
 @login_required
 def dossier_list(request):
     dossiers = (
@@ -51,6 +55,7 @@ def dossier_list(request):
         },
     )
 
+"""Affiche le détail d'un dossier client et permet l'échange avec un conseiller."""
 @login_required
 def dossier_detail(request, pk):
     dossier = get_object_or_404(
@@ -84,6 +89,9 @@ def dossier_detail(request, pk):
             advisor_message.save()
 
             return redirect("dossier_detail", pk=dossier.pk)
+
+    # Les options affichées pour la LLD sont incluses dans l'offre.
+    # Elles servent à informer le client, sans recalcul tarifaire supplémentaire.
 
     if dossier.application_type == Dossier.ApplicationType.LLD:
         lld_included_options = Option.objects.filter(is_active=True).order_by("name")
@@ -124,6 +132,7 @@ def dossier_detail(request, pk):
         },
     )
 
+"""Démarre une demande d'achat ou de LLD pour un véhicule donné."""
 @login_required
 def start_dossier(request, vehicle_pk, application_type):
     vehicle = get_object_or_404(Vehicle, pk=vehicle_pk)
@@ -146,6 +155,7 @@ def start_dossier(request, vehicle_pk, application_type):
     ]:
         return redirect("vehicle_detail", pk=vehicle.pk)
 
+    # Si un dossier actif existe déjà pour ce véhicule et ce type de demande,on le réutilise pour éviter les doublons côté client.
     dossier = (
         Dossier.objects.filter(
             customer=request.user,
@@ -175,6 +185,7 @@ def start_dossier(request, vehicle_pk, application_type):
 
     return redirect("dossier_detail", pk=dossier.pk)
 
+"""Permet au client de compléter ses informations et déposer ses justificatifs."""
 @login_required
 def complete_dossier(request, pk):
     dossier = get_object_or_404(
@@ -201,6 +212,9 @@ def complete_dossier(request, pk):
         uploaded_document_types.intersection(required_document_types)
     )
 
+    # La barre de progression du dossier est calculée à partir des documents obligatoires.
+    # Exemple : pour une LLD avec 6 documents attendus, 3 documents déposés donnent 50 %.
+    # Seuls les types de documents réellement attendus pour le dossier sont pris en compte.
     completion_percentage = 0
 
     if required_documents_count:
@@ -237,6 +251,7 @@ def complete_dossier(request, pk):
             if form.is_valid():
                 dossier = form.save(commit=False)
 
+                # La date de consentement est enregistrée uniquement au premier accord.
                 if (
                     dossier.data_processing_consent
                     and not dossier.data_processing_consent_at
@@ -264,6 +279,8 @@ def complete_dossier(request, pk):
                 ],
             )
 
+            # Un document déjà présent est remplacé par la nouvelle version.
+            # Son statut repasse en attente de validation back-office.
             if upload_form.is_valid():
                 Document.objects.update_or_create(
                     dossier=dossier,
@@ -318,6 +335,7 @@ def complete_dossier(request, pk):
         },
     )
 
+"""Soumet directement un dossier brouillon et historise le changement de statut."""
 @login_required
 def submit_dossier(request, pk):
     dossier = get_object_or_404(
@@ -343,6 +361,7 @@ def submit_dossier(request, pk):
     return redirect("dossier_detail", pk=dossier.pk)
 
 
+"""Supprime un dossier uniquement s'il appartient au client et reste en brouillon."""
 @login_required
 def delete_dossier(request, pk):
     dossier = get_object_or_404(
@@ -356,6 +375,7 @@ def delete_dossier(request, pk):
 
     return redirect("accounts:espace_client")
 
+"""Retourne un document uniquement si le client connecté en est propriétaire."""
 @login_required
 def document_download(request, pk):
     document = get_object_or_404(
