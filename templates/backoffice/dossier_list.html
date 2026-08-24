@@ -1,0 +1,138 @@
+{% extends "backoffice/base_backoffice.html" %}
+{% load humanize %}
+
+{% block backoffice_title %}{{ page_title }}{% endblock %}
+{% block backoffice_page_title %}{{ page_title }}{% endblock %}
+{% block active_dossiers %}active{% endblock %}
+
+{% block backoffice_content %}
+<div class="row row-cols-1 row-cols-md-2 row-cols-xl-4 g-4 mb-4">
+    <div class="col">
+        <div class="admin-kpi-card h-100">
+            <p class="admin-kpi-label">À traiter</p>
+            <h2 class="admin-kpi-value">{{ submitted_dossiers }}</h2>
+            <span class="admin-kpi-trend warning">Dossiers soumis</span>
+        </div>
+    </div>
+
+    <div class="col">
+        <div class="admin-kpi-card h-100">
+            <p class="admin-kpi-label">En instruction</p>
+            <h2 class="admin-kpi-value">{{ under_review_dossiers }}</h2>
+            <span class="admin-kpi-trend neutral">Analyse commerciale</span>
+        </div>
+    </div>
+
+    <div class="col">
+        <div class="admin-kpi-card h-100">
+            <p class="admin-kpi-label">Validés</p>
+            <h2 class="admin-kpi-value">{{ approved_dossiers }}</h2>
+            <span class="admin-kpi-trend positive">Dossiers acceptés</span>
+        </div>
+    </div>
+
+    <div class="col">
+        <div class="admin-kpi-card h-100">
+            <p class="admin-kpi-label">Refusés</p>
+            <h2 class="admin-kpi-value">{{ rejected_dossiers }}</h2>
+            <span class="admin-kpi-trend neutral">Dossiers non acceptés</span>
+        </div>
+    </div>
+</div>
+
+<div class="admin-card">
+    <div class="admin-card-header">
+        <div>
+            <h2 class="admin-card-title">{{ page_title }}</h2>
+            <p class="admin-page-label">
+                Visualisez les demandes clients avant instruction, validation ou refus.
+            </p>
+        </div>
+
+        <a href="{% url 'backoffice:dashboard' %}" class="admin-card-link">
+            Retour dashboard
+        </a>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table admin-table align-middle">
+            <thead>
+                <tr>
+                    <th>Dossier</th>
+                    <th>Client</th>
+                    <th>Véhicule</th>
+                    <th>Type</th>
+                    <th>Mensualité</th>
+                    <th>Statut</th>
+                    <th>Mise à jour</th>
+                    <th></th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for dossier in dossiers %}
+                    <tr>
+                        <td>
+                            <strong>#{{ dossier.id }}</strong>
+                        </td>
+
+                        <td>
+                            {{ dossier.customer.get_full_name|default:dossier.customer.username }}
+                        </td>
+
+                        <td>
+                            {{ dossier.vehicle.brand }} {{ dossier.vehicle.model }}
+                            {% if dossier.vehicle.reference %}
+                                <br>
+                                <span class="admin-page-label">{{ dossier.vehicle.reference }}</span>
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            {{ dossier.get_application_type_display }}
+                        </td>
+
+                        <td>
+                            {% if dossier.application_type == "lld" and dossier.vehicle.price_monthly %}
+                                {{ dossier.vehicle.price_monthly|floatformat:0|intcomma }} €
+                            {% else %}
+                                —
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            {% if dossier.status == "approved" %}
+                                <span class="admin-badge approved">{{ dossier.get_status_display }}</span>
+                            {% elif dossier.status == "rejected" %}
+                                <span class="admin-badge missing">{{ dossier.get_status_display }}</span>
+                            {% elif dossier.status == "under_review" %}
+                                <span class="admin-badge pending">{{ dossier.get_status_display }}</span>
+                            {% elif dossier.status == "submitted" %}
+                                <span class="admin-badge pending">{{ dossier.get_status_display }}</span>
+                            {% else %}
+                                <span class="admin-badge neutral">{{ dossier.get_status_display }}</span>
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            {{ dossier.updated_at|date:"d/m/Y" }}
+                        </td>
+
+                        <td>
+                            <a href="{% url 'backoffice:dossier_detail' dossier.id %}" class="admin-table-link">
+                                Voir
+                            </a>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="8">
+                            Aucun dossier achat ou location pour le moment.
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

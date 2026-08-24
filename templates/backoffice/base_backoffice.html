@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block navbar %}{% endblock %}
+{% block site_messages %}{% endblock %}
+{% block footer %}{% endblock %}
+
+{% block title %}
+{% block backoffice_title %}Back-office{% endblock %} - M Motors
+{% endblock %}
+
+{% block content %}
+
+<section class="admin-layout">
+    <aside class="admin-sidebar">
+        <div class="admin-sidebar-brand">
+            <img src="{% static 'img/logo.png' %}" alt="M Motors" class="admin-logo">
+            <span>Back-office</span>
+        </div>
+
+    <nav class="admin-nav">
+        <a href="{% url 'backoffice:dashboard' %}" class="admin-nav-link {% block active_dashboard %}{% endblock %}">
+            <i class="bi bi-grid"></i>
+            <span>Tableau de bord</span>
+        </a>
+
+        <a href="{% url 'backoffice:dossier_list' %}" class="admin-nav-link {% block active_dossiers %}{% endblock %}">
+            <i class="bi bi-folder2-open"></i>
+            <span>Demandes en cours</span>
+        </a>
+
+        <a href="{% url 'backoffice:dossier_list' %}?status=submitted" class="admin-nav-link">
+            <i class="bi bi-hourglass-split"></i>
+            <span>À traiter</span>
+        </a>
+
+        <a href="{% url 'backoffice:message_list' %}" class="admin-nav-link {% block active_messages %}{% endblock %}">
+            <i class="bi bi-chat-dots"></i>
+            <span>Messages clients</span>
+        </a>
+
+        <a href="{% url 'backoffice:client_list' %}" class="admin-nav-link {% block active_clients %}{% endblock %}">
+            <i class="bi bi-people"></i>
+            <span>Clients</span>
+        </a>
+
+        <a href="{% url 'backoffice:vehicle_list' %}" class="admin-nav-link {% block active_vehicles %}{% endblock %}">
+            <i class="bi bi-car-front"></i>
+            <span>Véhicules</span>
+        </a>
+
+        <a href="{% url 'backoffice:dossier_list' %}?status=approved" class="admin-nav-link">
+            <i class="bi bi-check2-circle"></i>
+            <span>Dossiers validés</span>
+        </a>
+
+    </nav>
+</aside>
+
+<div class="admin-main">
+    <header class="admin-topbar">
+        <div>
+            <p class="admin-page-label">Espace commercial</p>
+            <h1 class="admin-page-title">
+                {% block backoffice_page_title %}{% endblock %}
+            </h1>
+        </div>
+
+        <div class="admin-topbar-actions">
+            <div class="admin-search">
+                <i class="bi bi-search"></i>
+                <input type="text" placeholder="Rechercher un client, un dossier, un véhicule...">
+            </div>
+
+            <button class="admin-icon-btn">
+                <i class="bi bi-bell"></i>
+            </button>
+
+            <div class="dropdown">
+                <button
+                    class="admin-user"
+                    type="button"
+                    data-bs-toggle="dropdown"
+                    aria-expanded="false"
+                >
+                    <div class="admin-user-avatar">
+                        {{ request.user.first_name|first|default:request.user.username|first|upper }}{{ request.user.last_name|first|upper }}
+                    </div>
+
+                    <div>
+                        <strong>
+                            {{ request.user.get_full_name|default:request.user.username }}
+                        </strong>
+                        <span>Équipe commerciale</span>
+                    </div>
+                </button>
+
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li>
+                        <a class="dropdown-item" href="{% url 'backoffice:dashboard' %}">
+                            Tableau de bord
+                        </a>
+                    </li>
+
+                    <li>
+                        <a class="dropdown-item" href="{% url 'backoffice:dossier_list' %}">
+                            Demandes en cours
+                        </a>
+                    </li>
+
+                    <li>
+                        <a class="dropdown-item" href="/">
+                            Retour au site
+                        </a>
+                    </li>
+
+                    <li>
+                        <hr class="dropdown-divider">
+                    </li>
+
+                    <li>
+                        <form method="post" action="{% url 'logout' %}">
+                            {% csrf_token %}
+                            <button type="submit" class="dropdown-item text-danger">
+                                Déconnexion
+                            </button>
+                        </form>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </header>
+
+    {% block backoffice_content %}{% endblock %}
+</div>
+
+</section>
+{% endblock %}

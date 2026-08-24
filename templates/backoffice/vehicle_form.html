@@ -1,0 +1,287 @@
+{% extends "backoffice/base_backoffice.html" %}
+
+{% load static %}
+
+{% block backoffice_title %}{{ page_title }}{% endblock %}
+{% block backoffice_page_title %}{{ page_title }}{% endblock %}
+{% block active_vehicles %}active{% endblock %}
+
+{% block backoffice_content %}
+<div class="mb-4">
+    <a href="{% url 'backoffice:vehicle_list' %}" class="admin-card-link">
+        ← Retour aux véhicules
+    </a>
+</div>
+
+<div class="admin-card">
+    <div class="admin-card-header">
+        <div>
+            <h2 class="admin-card-title">{{ page_title }}</h2>
+            <p class="admin-page-label">
+                Renseignez les informations du véhicule, son type d’offre, sa photo et ses caractéristiques.
+            </p>
+        </div>
+    </div>
+
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+            <div class="alert alert-danger">
+                {{ form.non_field_errors }}
+            </div>
+        {% endif %}
+
+        <div class="row g-4">
+            <div class="col-12">
+                <h3 class="admin-card-title h5 mb-0">Informations principales</h3>
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label">Référence</label>
+                {{ form.reference }}
+                {{ form.reference.errors }}
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label">Marque</label>
+                {{ form.brand }}
+                {{ form.brand.errors }}
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label">Modèle</label>
+                {{ form.model }}
+                {{ form.model.errors }}
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label">Finition</label>
+                {{ form.trim }}
+                {{ form.trim.errors }}
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label">Catégorie</label>
+                {{ form.category }}
+                {{ form.category.errors }}
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label">Photo</label>
+
+                {% if vehicle and vehicle.image %}
+                    <div class="mb-2">
+                        {% if vehicle.image.name|slice:":4" == "img/" %}
+                            <a href="{% static vehicle.image.name %}" target="_blank" class="admin-table-link">
+                                Voir la photo actuelle
+                            </a>
+                        {% else %}
+                            <a href="{{ vehicle.image.url }}" target="_blank" class="admin-table-link">
+                                Voir la photo actuelle
+                            </a>
+                        {% endif %}
+                    </div>
+                {% endif %}
+
+                <input
+                    type="file"
+                    name="image"
+                    id="id_image"
+                    class="form-control"
+                    accept="image/*"
+                >
+
+                {{ form.image.errors }}
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label">Année</label>
+                {{ form.year }}
+                {{ form.year.errors }}
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label">Kilométrage</label>
+                {{ form.mileage }}
+                {{ form.mileage.errors }}
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label">Motorisation</label>
+                {{ form.fuel_type }}
+                {{ form.fuel_type.errors }}
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label">Boîte de vitesse</label>
+                {{ form.gearbox }}
+                {{ form.gearbox.errors }}
+            </div>
+
+            <div class="col-12 mt-2">
+                <hr>
+                <h3 class="admin-card-title h5 mb-0">Caractéristiques détaillées</h3>
+                <p class="admin-page-label mb-0">
+                    Ces informations seront affichées dans la fiche détaillée du véhicule.
+                </p>
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label">Couleur</label>
+                {{ form.color }}
+                {{ form.color.errors }}
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label">Nombre de portes</label>
+                {{ form.doors }}
+                {{ form.doors.errors }}
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label">Nombre de places</label>
+                {{ form.seats }}
+                {{ form.seats.errors }}
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label">Garantie</label>
+                {{ form.warranty }}
+                {{ form.warranty.errors }}
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label">Puissance fiscale</label>
+                {{ form.fiscal_power }}
+                {{ form.fiscal_power.errors }}
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label">Puissance DIN</label>
+                {{ form.power_hp }}
+                {{ form.power_hp.errors }}
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label">Émissions CO2</label>
+                {{ form.co2_emissions }}
+                {{ form.co2_emissions.errors }}
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label">Consommation moyenne</label>
+                {{ form.consumption }}
+                {{ form.consumption.errors }}
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label">Crit’Air</label>
+                {{ form.crit_air }}
+                {{ form.crit_air.errors }}
+            </div>
+
+            <div class="col-12 mt-2">
+                <hr>
+                <h3 class="admin-card-title h5 mb-0">Offre et tarifs</h3>
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label">Type d’offre</label>
+
+                {% if vehicle %}
+                    {{ form.offer_type.as_hidden }}
+                    {{ form.offer_type.errors }}
+
+                    <p class="admin-page-label mb-2">
+                        Offre actuelle :
+                        <strong>{{ vehicle.get_offer_type_display }}</strong>
+                    </p>
+
+                    <div class="d-flex flex-wrap gap-2">
+                        <button
+                            type="submit"
+                            name="switch_offer"
+                            value="sale"
+                            class="btn btn-sm {% if vehicle.offer_type == 'sale' %}btn-detail{% else %}btn-outline-secondary{% endif %}"
+                        >
+                            Achat
+                        </button>
+
+                        <button
+                            type="submit"
+                            name="switch_offer"
+                            value="lld"
+                            class="btn btn-sm {% if vehicle.offer_type == 'lld' %}btn-detail{% else %}btn-outline-secondary{% endif %}"
+                        >
+                            Location
+                        </button>
+
+                        <button
+                            type="submit"
+                            name="switch_offer"
+                            value="both"
+                            class="btn btn-sm {% if vehicle.offer_type == 'both' %}btn-detail{% else %}btn-outline-secondary{% endif %}"
+                        >
+                            Achat + location
+                        </button>
+                    </div>
+                {% else %}
+                    {{ form.offer_type }}
+                    {{ form.offer_type.errors }}
+                {% endif %}
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label">Prix de vente</label>
+                {{ form.price_sale }}
+                {{ form.price_sale.errors }}
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label">Mensualité location</label>
+                {{ form.price_monthly }}
+                {{ form.price_monthly.errors }}
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label">Statut disponibilité</label>
+                {{ form.availability_status }}
+                {{ form.availability_status.errors }}
+            </div>
+
+            <div class="col-12 mt-2">
+                <hr>
+                <h3 class="admin-card-title h5 mb-0">Description et options</h3>
+            </div>
+
+            <div class="col-12">
+                <label class="form-label">Description</label>
+                {{ form.description }}
+                {{ form.description.errors }}
+            </div>
+
+            <div class="col-12">
+                <label class="form-label">Options incluses</label>
+                {{ form.included_options }}
+                {{ form.included_options.errors }}
+
+                <p class="admin-page-label mt-2 mb-0">
+                    Séparez les options par des virgules. Exemple :
+                    GPS, Bluetooth, Caméra de recul, Climatisation automatique.
+                </p>
+            </div>
+        </div>
+
+        <div class="d-flex flex-column flex-md-row gap-3 mt-4">
+            <button type="submit" class="btn btn-detail">
+                {{ submit_label }}
+            </button>
+
+            <a href="{% url 'backoffice:vehicle_list' %}" class="btn btn-outline-secondary">
+                Annuler
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,431 @@
+{% extends "base.html" %}
+{% load static humanize %}
+
+{% block title %}Compléter mon dossier - M Motors{% endblock %}
+
+{% block content %}
+<section class="finance-file-section">
+  <div class="container-fluid px-4 px-lg-5">
+
+    <div class="finance-file-header">
+      <div>
+        <p class="finance-file-label">
+          {% if dossier.application_type == "lld" %}
+            Financement LLD
+          {% else %}
+            Demande d'achat
+          {% endif %}
+        </p>
+
+        <h1 class="finance-file-title">Compléter mon dossier</h1>
+
+        <p class="finance-file-subtitle">
+          {% if dossier.application_type == "lld" %}
+            Complétez votre demande de location longue durée pour le véhicule sélectionné.
+          {% else %}
+            Complétez votre demande d’achat pour le véhicule sélectionné.
+          {% endif %}
+        </p>
+      </div>
+    </div>
+
+    <div class="finance-vehicle-card finance-vehicle-card-summary">
+      <div class="finance-vehicle-main">
+        {% if dossier.vehicle.image %}
+          <img
+            src="{% static dossier.vehicle.image %}"
+            alt="{{ dossier.vehicle.brand }} {{ dossier.vehicle.model }}"
+            class="finance-vehicle-image"
+          >
+        {% else %}
+          <img
+            src="{% static 'img/concession.png' %}"
+            alt="{{ dossier.vehicle.brand }} {{ dossier.vehicle.model }}"
+            class="finance-vehicle-image"
+          >
+        {% endif %}
+
+        <div class="finance-vehicle-content">
+          <h2>{{ dossier.vehicle.brand }} {{ dossier.vehicle.model }}</h2>
+
+          {% if dossier.application_type == "lld" %}
+            <p>
+              Location longue durée
+              {% if dossier.vehicle.price_monthly %}
+                • {{ dossier.vehicle.price_monthly|floatformat:0|intcomma }} € / mois
+              {% endif %}
+            </p>
+          {% else %}
+            <p>
+              Achat
+              {% if dossier.vehicle.price_sale %}
+                • {{ dossier.vehicle.price_sale|floatformat:0|intcomma }} €
+              {% endif %}
+            </p>
+          {% endif %}
+
+          <p>
+            {{ dossier.vehicle.year }} • {{ dossier.vehicle.mileage|intcomma }} km
+          </p>
+        </div>
+      </div>
+
+      {% if dossier.application_type == "lld" %}
+        <div class="finance-location-summary">
+          <h3>Récapitulatif de votre location</h3>
+
+          <p>
+            <span>Durée choisie</span>
+            <strong>
+              {% if dossier.lld_duration_months %}
+                {{ dossier.lld_duration_months }} mois
+              {% else %}
+                Non renseignée
+              {% endif %}
+            </strong>
+          </p>
+
+          <p>
+            <span>Mensualité location</span>
+            <strong>{{ vehicle_monthly_price|floatformat:2 }} €/mois</strong>
+          </p>
+
+          <p>
+            <span>Total estimé pendant la location</span>
+            <strong>{{ estimated_location_total|floatformat:2 }} €</strong>
+          </p>
+
+          <p class="mb-0">
+            <span>Option d’achat estimée</span>
+            <strong>
+              {% if purchase_option_estimate is not None %}
+                {{ purchase_option_estimate|floatformat:2 }} €
+              {% else %}
+                À définir par M-Motors
+              {% endif %}
+            </strong>
+          </p>
+        </div>
+      {% endif %}
+    </div>
+
+    <div class="progress-card">
+      <div class="progress-card-top">
+        <h2 class="section-title mb-0">Progression du dossier</h2>
+        <span class="progress-value">{{ completion_percentage }} % complété</span>
+      </div>
+
+      <div class="custom-progress">
+        <div class="custom-progress-bar" style="width: {{ completion_percentage }}%;"></div>
+      </div>
+
+      <p class="progress-help mb-0">
+        Ajoutez vos documents justificatifs un par un. Vous pouvez revenir plus tard pour compléter votre dossier.
+      </p>
+    </div>
+
+    <form method="post" class="finance-form">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="save_information">
+
+      <div class="row g-4">
+        <div class="col-lg-6">
+          <div class="finance-form-card">
+            <h3 class="section-title">Informations personnelles</h3>
+
+            <div class="row g-3">
+              <div class="col-md-6">
+                <input
+                  type="text"
+                  class="form-control finance-input"
+                  value="{{ request.user.last_name }}"
+                  placeholder="Nom"
+                  readonly
+                >
+              </div>
+
+              <div class="col-md-6">
+                <input
+                  type="text"
+                  class="form-control finance-input"
+                  value="{{ request.user.first_name }}"
+                  placeholder="Prénom"
+                  readonly
+                >
+              </div>
+
+              <div class="col-md-6">
+                {{ form.birth_date }}
+                {% if form.birth_date.errors %}
+                  <div class="text-danger small mt-1">
+                    {{ form.birth_date.errors }}
+                  </div>
+                {% endif %}
+              </div>
+
+              <div class="col-md-6">
+                <input
+                  type="email"
+                  class="form-control finance-input"
+                  value="{{ request.user.email }}"
+                  placeholder="Adresse email"
+                  readonly
+                >
+              </div>
+
+              <div class="col-12">
+                {{ form.address }}
+                {% if form.address.errors %}
+                  <div class="text-danger small mt-1">
+                    {{ form.address.errors }}
+                  </div>
+                {% endif %}
+              </div>
+
+              <div class="col-md-6">
+                {{ form.postal_code }}
+                {% if form.postal_code.errors %}
+                  <div class="text-danger small mt-1">
+                    {{ form.postal_code.errors }}
+                  </div>
+                {% endif %}
+              </div>
+
+              <div class="col-md-6">
+                {{ form.city }}
+                {% if form.city.errors %}
+                  <div class="text-danger small mt-1">
+                    {{ form.city.errors }}
+                  </div>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-lg-6">
+          <div class="finance-form-card">
+            <h3 class="section-title">Votre demande</h3>
+
+            {% if dossier.application_type == "lld" %}
+              <p class="mb-3">
+                Ces informations nous permettent de préparer l’analyse de votre dossier de location.
+              </p>
+
+              <div class="row g-3">
+                <div class="col-12">
+                  <label class="form-label">
+                    Êtes-vous locataire ou propriétaire ?
+                  </label>
+                  {{ form.housing_status }}
+                  {% if form.housing_status.errors %}
+                    <div class="text-danger small mt-1">
+                      {{ form.housing_status.errors }}
+                    </div>
+                  {% endif %}
+                </div>
+
+                <div class="col-12" id="monthly-rent-wrapper">
+                  <label class="form-label">
+                    Montant de votre loyer mensuel
+                  </label>
+                  {{ form.monthly_rent }}
+                  {% if form.monthly_rent.errors %}
+                    <div class="text-danger small mt-1">
+                      {{ form.monthly_rent.errors }}
+                    </div>
+                  {% endif %}
+                </div>
+
+                <div class="col-12">
+                  <label class="form-label d-block">
+                    Avez-vous un crédit en cours ?
+                  </label>
+
+                  <div class="d-flex gap-4 flex-wrap">
+                    {% for radio in form.has_current_credit %}
+                      <div class="form-check">
+                        {{ radio.tag }}
+                        <label class="form-check-label" for="{{ radio.id_for_label }}">
+                          {{ radio.choice_label }}
+                        </label>
+                      </div>
+                    {% endfor %}
+                  </div>
+
+                  {% if form.has_current_credit.errors %}
+                    <div class="text-danger small mt-1">
+                      {{ form.has_current_credit.errors }}
+                    </div>
+                  {% endif %}
+                </div>
+
+                <div class="col-12" id="monthly-credit-wrapper">
+                  <label class="form-label">
+                    Si oui, montant total de vos mensualités de crédit
+                  </label>
+                  {{ form.monthly_credit_amount }}
+                  {% if form.monthly_credit_amount.errors %}
+                    <div class="text-danger small mt-1">
+                      {{ form.monthly_credit_amount.errors }}
+                    </div>
+                  {% endif %}
+                </div>
+              </div>
+            {% else %}
+              <p class="mb-0">
+                Pour une demande d’achat, seuls les documents nécessaires à l’identification
+                et au traitement de la demande sont requis.
+              </p>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="col-12">
+          <div class="finance-form-card">
+            <h3 class="section-title">Validation des informations</h3>
+
+            <div class="form-check mb-3">
+              <input
+                class="form-check-input"
+                type="checkbox"
+                name="certify_information"
+                id="certify_information"
+                required
+              >
+              <label class="form-check-label" for="certify_information">
+                Je certifie que les informations renseignées sont exactes.
+              </label>
+            </div>
+
+            <div class="form-check mb-4">
+              {{ form.data_processing_consent }}
+              <label class="form-check-label" for="{{ form.data_processing_consent.id_for_label }}">
+                {{ form.data_processing_consent.label }}
+              </label>
+
+              {% if form.data_processing_consent.errors %}
+                <div class="text-danger small mt-1">
+                  {{ form.data_processing_consent.errors }}
+                </div>
+              {% endif %}
+            </div>
+
+            <p class="small text-muted">
+              Vos informations et documents sont utilisés uniquement pour le traitement
+              de votre demande. L’accès est réservé à vous-même et aux personnes habilitées
+              à instruire votre dossier.
+            </p>
+
+            <button type="submit" class="btn btn-submit-file">
+              Enregistrer les informations
+            </button>
+          </div>
+        </div>
+      </div>
+    </form>
+
+    <div class="finance-form-card">
+      <h3 class="section-title">Pièces justificatives</h3>
+
+      <div class="row g-3">
+        {% for document_type in required_document_types %}
+          <div class="col-lg-4 col-md-6">
+            <div class="upload-card">
+              {% if document_type == "id_card" %}
+                <label class="upload-title">Pièce d’identité</label>
+                <small>CNI ou passeport</small>
+              {% elif document_type == "driver_license" %}
+                <label class="upload-title">Permis de conduire</label>
+                <small>Recto / verso</small>
+              {% elif document_type == "proof_of_address" %}
+                <label class="upload-title">Justificatif de domicile</label>
+                <small>Moins de 3 mois</small>
+              {% elif document_type == "proof_of_income" %}
+                <label class="upload-title">Justificatif de revenus</label>
+                <small>3 derniers bulletins de salaire</small>
+              {% elif document_type == "tax_notice" %}
+                <label class="upload-title">Avis d’imposition</label>
+                <small>Dernier avis d'imposition disponible</small>
+              {% elif document_type == "rent_receipt" %}
+                <label class="upload-title">Quittance de loyer</label>
+                <small>Dernière quittance disponible</small>
+              {% else %}
+                <label class="upload-title">Document complémentaire</label>
+                <small>Document demandé pour votre dossier</small>
+              {% endif %}
+
+              <form method="post" enctype="multipart/form-data" class="mt-2">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="upload_document">
+                <input type="hidden" name="document_type" value="{{ document_type }}">
+
+                <input
+                  type="file"
+                  name="file"
+                  class="form-control finance-file-input"
+                  accept=".pdf,.jpg,.jpeg,.png"
+                  required
+                >
+
+                {% if document_upload_errors %}
+                  {% for error_document_type, errors in document_upload_errors.items %}
+                    {% if error_document_type == document_type %}
+                      <div class="text-danger small mt-2">
+                        {{ errors.file }}
+                      </div>
+                    {% endif %}
+                  {% endfor %}
+                {% endif %}
+
+                <button type="submit" class="btn btn-save-file w-100 mt-3">
+                  Ajouter / remplacer ce document
+                </button>
+              </form>
+
+              {% for document in dossier.documents.all %}
+                {% if document.document_type == document_type %}
+                  <div class="mt-2 small">
+                    <p class="mb-1 text-success">
+                      <i class="bi bi-check-circle me-1"></i>
+                      Document déjà déposé
+                    </p>
+
+                    <a href="{% url 'document_download' document.pk %}" class="dashboard-link">
+                      Voir le document
+                    </a>
+                  </div>
+                {% endif %}
+              {% endfor %}
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="finance-form-card">
+      <h3 class="section-title">Soumission du dossier</h3>
+
+      {% if is_dossier_complete %}
+        <p class="mb-4">
+          Tous les documents obligatoires ont été déposés. Vous pouvez maintenant soumettre votre dossier.
+        </p>
+
+        <form method="post">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="submit_dossier">
+
+          <button type="submit" class="btn btn-submit-file">
+            Soumettre mon dossier
+          </button>
+        </form>
+      {% else %}
+        <p class="mb-0 text-muted">
+          Vous pourrez soumettre votre dossier lorsque toutes les pièces justificatives obligatoires auront été déposées.
+        </p>
+      {% endif %}
+    </div>
+
+  </div>
+</section>
+{% endblock %}

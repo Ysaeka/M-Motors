@@ -1,0 +1,167 @@
+{% extends "backoffice/base_backoffice.html" %}
+{% load humanize %}
+
+{% block backoffice_title %}Tableau de bord{% endblock %}
+{% block backoffice_page_title %}Tableau de bord{% endblock %}
+{% block active_dashboard %}active{% endblock %}
+
+{% block backoffice_content %}
+
+<div class="row row-cols-1 row-cols-md-2 row-cols-xl-4 g-4 mb-4">
+    <div class="col">
+        <div class="admin-kpi-card h-100">
+            <p class="admin-kpi-label">Dossiers en cours</p>
+            <h2 class="admin-kpi-value">{{ under_review_dossiers }}</h2>
+            <span class="admin-kpi-trend neutral">En instruction</span>
+        </div>
+    </div>
+
+    <div class="col">
+        <div class="admin-kpi-card h-100">
+            <p class="admin-kpi-label">À traiter</p>
+            <h2 class="admin-kpi-value">{{ submitted_dossiers }}</h2>
+            <span class="admin-kpi-trend warning">Dossiers soumis</span>
+        </div>
+    </div>
+
+    <div class="col">
+        <div class="admin-kpi-card h-100">
+            <p class="admin-kpi-label">Dossiers validés</p>
+            <h2 class="admin-kpi-value">{{ approved_dossiers }}</h2>
+            <span class="admin-kpi-trend positive">Acceptés</span>
+        </div>
+    </div>
+
+    <div class="col">
+        <div class="admin-kpi-card h-100">
+            <p class="admin-kpi-label">Véhicules disponibles</p>
+            <h2 class="admin-kpi-value">{{ available_vehicles }}</h2>
+            <span class="admin-kpi-trend neutral">Catalogue actif</span>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-xl-8">
+        <div class="admin-card">
+            <div class="admin-card-header">
+                <h2 class="admin-card-title">Demandes récentes</h2>
+                <a href="{% url 'backoffice:dossier_list' %}" class="admin-card-link">
+                    Voir tout
+                </a>
+            </div>
+
+        <div class="table-responsive">
+            <table class="table admin-table align-middle">
+                <thead>
+                    <tr>
+                        <th>Client</th>
+                        <th>Véhicule</th>
+                        <th>Type</th>
+                        <th>Mensualité</th>
+                        <th>Statut</th>
+                        <th>Mise à jour</th>
+                        <th></th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for dossier in recent_dossiers %}
+                        <tr>
+                            <td>
+                                {{ dossier.customer.get_full_name|default:dossier.customer.username }}
+                            </td>
+
+                            <td>
+                                {{ dossier.vehicle.brand }} {{ dossier.vehicle.model }}
+                            </td>
+
+                            <td>
+                                {{ dossier.get_application_type_display }}
+                            </td>
+
+                            <td>
+                                {% if dossier.application_type == "lld" and dossier.vehicle.price_monthly %}
+                                    {{ dossier.vehicle.price_monthly|floatformat:0|intcomma }} €
+                                {% else %}
+                                    —
+                                {% endif %}
+                            </td>
+
+                            <td>
+                                {% if dossier.status == "approved" %}
+                                    <span class="admin-badge approved">
+                                        {{ dossier.get_status_display }}
+                                    </span>
+                                {% elif dossier.status == "rejected" %}
+                                    <span class="admin-badge missing">
+                                        {{ dossier.get_status_display }}
+                                    </span>
+                                {% elif dossier.status == "under_review" %}
+                                    <span class="admin-badge pending">
+                                        {{ dossier.get_status_display }}
+                                    </span>
+                                {% else %}
+                                    <span class="admin-badge pending">
+                                        {{ dossier.get_status_display }}
+                                    </span>
+                                {% endif %}
+                            </td>
+
+                            <td>
+                                {{ dossier.updated_at|date:"d/m/Y" }}
+                            </td>
+
+                            <td>
+                                <a
+                                    href="{% url 'backoffice:dossier_detail' dossier.id %}"
+                                    class="admin-table-link"
+                                >
+                                    Voir
+                                </a>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="7">
+                                Aucune demande récente pour le moment.
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="col-xl-4">
+    <div class="admin-card mb-4">
+        <div class="admin-card-header">
+            <h2 class="admin-card-title">Activité récente</h2>
+        </div>
+
+        {% for activity in recent_activities %}
+            <div class="admin-activity-item">
+                <strong>
+                    Dossier #{{ activity.dossier.id }} mis à jour
+                </strong>
+
+                <p>
+                    {{ activity.dossier.customer.get_full_name|default:activity.dossier.customer.username }}
+                    —
+                    {{ activity.dossier.vehicle.brand }} {{ activity.dossier.vehicle.model }}
+                    :
+                    {{ activity.get_old_status_display }} → {{ activity.get_new_status_display }}
+                </p>
+            </div>
+        {% empty %}
+            <div class="admin-activity-item">
+                <strong>Aucune activité récente</strong>
+                <p>Les prochaines modifications de dossiers apparaîtront ici.</p>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+
+</div>
+{% endblock %}

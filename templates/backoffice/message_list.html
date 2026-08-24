@@ -1,0 +1,115 @@
+{% extends "backoffice/base_backoffice.html" %}
+{% load humanize %}
+
+{% block backoffice_title %}Messages clients{% endblock %}
+{% block backoffice_page_title %}Messages clients{% endblock %}
+{% block active_messages %}active{% endblock %}
+
+{% block backoffice_content %}
+<div class="row row-cols-1 row-cols-md-3 g-4 mb-4">
+    <div class="col">
+        <div class="admin-kpi-card h-100">
+            <p class="admin-kpi-label">Messages reçus</p>
+            <h2 class="admin-kpi-value">{{ total_messages }}</h2>
+            <span class="admin-kpi-trend neutral">Total</span>
+        </div>
+    </div>
+
+    <div class="col">
+        <div class="admin-kpi-card h-100">
+            <p class="admin-kpi-label">À répondre</p>
+            <h2 class="admin-kpi-value">{{ unanswered_messages }}</h2>
+            <span class="admin-kpi-trend warning">En attente</span>
+        </div>
+    </div>
+
+    <div class="col">
+        <div class="admin-kpi-card h-100">
+            <p class="admin-kpi-label">Répondus</p>
+            <h2 class="admin-kpi-value">{{ answered_messages }}</h2>
+            <span class="admin-kpi-trend positive">Traités</span>
+        </div>
+    </div>
+</div>
+
+<div class="admin-card">
+    <div class="admin-card-header">
+        <div>
+            <h2 class="admin-card-title">Messages clients</h2>
+            <p class="admin-page-label">
+                Consultez les messages envoyés depuis l’espace client.
+            </p>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table admin-table align-middle">
+            <thead>
+                <tr>
+                    <th>Dossier</th>
+                    <th>Client</th>
+                    <th>Véhicule</th>
+                    <th>Sujet</th>
+                    <th>Message</th>
+                    <th>Statut</th>
+                    <th>Reçu le</th>
+                    <th></th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for message in messages %}
+                    <tr>
+                        <td>
+                            <strong>#{{ message.dossier.id }}</strong>
+                        </td>
+
+                        <td>
+                            {{ message.dossier.customer.get_full_name|default:message.dossier.customer.username }}
+                        </td>
+
+                        <td>
+                            {{ message.dossier.vehicle.brand }} {{ message.dossier.vehicle.model }}
+                        </td>
+
+                        <td>
+                            {{ message.subject|default:"—" }}
+                        </td>
+
+                        <td>
+                            {{ message.message|truncatechars:80 }}
+                        </td>
+
+                        <td>
+                            {% if message.advisor_response %}
+                                <span class="admin-badge approved">Répondu</span>
+                            {% else %}
+                                <span class="admin-badge pending">À répondre</span>
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            {{ message.created_at|date:"d/m/Y à H:i" }}
+                        </td>
+
+                        <td>
+                            <a
+                                href="{% url 'backoffice:dossier_detail' message.dossier.id %}"
+                                class="admin-table-link"
+                            >
+                                Voir le dossier
+                            </a>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="8">
+                            Aucun message client pour le moment.
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,155 @@
+ {% extends "base.html" %}
+ {% load static humanize %}
+
+{% block content %}
+
+<section class="client-dashboard-section">
+    <div class="container-fluid px-4 px-lg-5">
+        
+        <div class="dashboard-header">
+            <div>
+                <p class="dashboard-label">Espace client</p>
+                <h1 class="dashboard-title">Mon espace client</h1>
+                <p class="dashboard-subtitle">
+                Consultez vos informations, vos recherches récentes et vos demandes de financement.
+                </p>
+            </div>
+            <a href="{% url 'accounts:profil' %}" class="btn btn-client-edit">Modifier mon profil</a>
+        </div>
+
+        <div class="row g-4 mb-4">
+            <div class="col-lg-6">
+                <div class="dashboard-card">
+                    <h2 class="dashboard-card-title">Mes informations personnelles</h2>
+                    <div class="info-list">
+                        <div>
+                            <strong>Nom :</strong>
+                            {{ request.user.last_name|default:"Non renseigné" }}
+                        </div>
+                        <div>
+                            <strong>Prénom :</strong>
+                            {{ request.user.first_name|default:"Non renseigné" }}
+                        </div>
+                        <div>
+                            <strong>Email :</strong>
+                            {{ request.user.email|default:"Non renseigné" }}
+                        </div>
+                        <div>
+                            <strong>Téléphone :</strong>
+                            {{ profile.phone|default:"Non renseigné" }}
+                        </div>
+                        <div>
+                            <strong>Adresse :</strong>
+                            {{ profile.address|default:"Non renseignée" }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        
+
+            <div class="col-lg-6">
+                <div class="dashboard-card">
+                    <h2 class="dashboard-card-title">Dernières recherches</h2>
+
+                    <div class="search-history-item">
+                        <div>
+                        <h3>Peugeot 208</h3>
+                        <p>Location • 250 €/mois • Recherche du 12/03/2026</p>
+                        </div>
+                        <a href="#" class="dashboard-link">Voir</a>
+                    </div>
+
+                    <div class="search-history-item">
+                        <div>
+                        <h3>Renault Clio</h3>
+                        <p>Achat • Budget 14 000 € • Recherche du 09/03/2026</p>
+                        </div>
+                        <a href="#" class="dashboard-link">Voir</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="dashboard-card">
+            <h2 class="dashboard-card-title">Mes demandes de financement en cours</h2>
+
+            {% if dossiers %}
+                {% for dossier in dossiers %}
+                <div class="finance-request-card">
+                    <div class="finance-car">
+                    {% if dossier.vehicle.image %}
+                        <img
+                        src="{% static dossier.vehicle.image %}"
+                        alt="{{ dossier.vehicle.brand }} {{ dossier.vehicle.model }}"
+                        class="finance-car-image"
+                        >
+                    {% else %}
+                        <img
+                        src="{% static 'img/concession.png' %}"
+                        alt="{{ dossier.vehicle.brand }} {{ dossier.vehicle.model }}"
+                        class="finance-car-image"
+                        >
+                    {% endif %}
+                    </div>
+
+                    <div class="finance-content">
+                        <h3 class="finance-title">
+                            {{ dossier.vehicle.brand }} {{ dossier.vehicle.model }}
+                        </h3>
+
+                        {% if dossier.application_type == "lld" %}
+                            <p class="finance-meta">
+                            Location longue durée
+                            {% if dossier.vehicle.price_monthly %}
+                                • {{ dossier.vehicle.price_monthly|floatformat:0|intcomma }} €/mois
+                            {% endif %}
+                            </p>
+                        {% else %}
+                            <p class="finance-meta">
+                            Achat
+                            {% if dossier.vehicle.price_sale %}
+                                • {{ dossier.vehicle.price_sale|floatformat:0|intcomma }} €
+                            {% endif %}
+                            </p>
+                        {% endif %}
+
+                        <p class="finance-date">
+                            Dossier créé le {{ dossier.created_at|date:"d/m/Y" }}
+                            {% if dossier.updated_at %}
+                            • Mis à jour le {{ dossier.updated_at|date:"d/m/Y" }}
+                            {% endif %}
+                        </p>
+
+                        <p class="finance-tracking-message">
+                            {{ dossier.status_message }}
+                        </p>
+                        </div>
+
+                        <div class="finance-status-block">
+                        <span class="status-badge status-pending">
+                            {{ dossier.get_status_display }}
+                        </span>
+
+                        <a href="{% url 'dossier_detail' dossier.pk %}" class="btn btn-finance-detail">
+                            Voir le dossier
+                        </a>
+
+                        <a
+                            href="{% url 'dossier_detail' dossier.pk %}#contact-conseiller"
+                            class="dashboard-link mt-2 contact-advisor-link"
+                        >
+                            <i class="bi bi-chat-dots-fill me-1"></i>
+                            Contacter un conseiller
+                        </a>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="alert alert-light border mb-0">
+                Vous n’avez pas encore de demande en cours.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</section>
+{% endblock %}

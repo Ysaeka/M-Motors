@@ -1,0 +1,253 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Accueil - M Motors{% endblock %}
+
+{% block content %}
+<section class="hero">
+  <div class="container-fluid px-4 px-lg-5">
+    <div class="row align-items-center">
+      <div class="col-lg-8">
+        <h1 class="hero-title">
+          <strong>Trouvez votre véhicule en</strong><br />
+          Achat ou Location longue durée
+        </h1>
+        <p class="hero-subtitle mt-4">
+          M Motors vous accompagne dans la recherche de votre véhicule,
+          la constitution de votre dossier et le suivi de votre demande en ligne.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="search-box-wrapper">
+  <div class="container-fluid px-4 px-lg-5">
+    <div class="row justify-content-center">
+      <div class="col-xl-10">
+        <ul class="nav search-tabs">
+          <li class="nav-item">
+            <button class="nav-link active" type="button" id="tab-location">
+              Location
+            </button>
+          </li>
+          <li class="nav-item">
+            <button class="nav-link" type="button" id="tab-achat">
+              Achat
+            </button>
+          </li>
+        </ul>
+
+        <form action="{% url 'vehicle_list' %}" method="get" class="search-box" id="search-box">
+          <input type="hidden" name="offer_type" id="home-offer-type" value="lld">
+
+          <div class="row g-4 align-items-center">
+            <div class="col-lg-3">
+              <select class="form-select" name="brand">
+                <option value="">Toutes les marques</option>
+                {% for brand in brands %}
+                  <option value="{{ brand }}">{{ brand }}</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <div class="col-lg-3">
+              <select class="form-select" name="category">
+                <option value="">Toutes les catégories</option>
+                {% for category in categories %}
+                  <option value="{{ category }}">{{ category }}</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <div class="col-lg-3">
+            <select class="form-select" name="budget_max" id="price-select">
+              <option value="" selected>Mensualité</option>
+              <option value="200">200 € / mois</option>
+              <option value="300">300 € / mois</option>
+              <option value="400">400 € / mois</option>
+            </select>
+            </div>
+
+            <div class="col-lg-3">
+              <button class="btn btn-search w-100" type="submit">
+                Rechercher
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="home-section">
+  <div class="container-fluid px-4 px-lg-5">
+    <div class="section-heading text-center">
+      <h2 class="section-title">Choisissez la voiture qui vous convient</h2>
+      <p class="section-text">
+        Que vous cherchiez une citadine, un SUV ou un véhicule familial,
+        M Motors vous aide à trouver une solution adaptée.
+      </p>
+    </div>
+
+    <div class="row g-4 mt-4">
+      <div class="col-md-6 col-xl-3">
+        <a href="/catalog/?category=Citadine" class="choice-card">
+          <i class="bi bi-car-front"></i>
+          <h3>Citadine</h3>
+          <p>Compacte, pratique et adaptée aux trajets du quotidien.</p>
+        </a>
+      </div>
+
+      <div class="col-md-6 col-xl-3">
+        <a href="/catalog/?category=SUV" class="choice-card">
+          <i class="bi bi-truck-front"></i>
+          <h3>SUV</h3>
+          <p>Confort, espace et polyvalence pour tous vos déplacements.</p>
+        </a>
+      </div>
+
+      <div class="col-md-6 col-xl-3">
+        <a href="/catalog/?category=Berline" class="choice-card">
+          <i class="bi bi-wallet2"></i>
+          <h3>Berline</h3>
+          <p>Confort, élégance et plaisir de conduite pour vos trajets.</p>
+        </a>
+      </div>
+
+      <div class="col-md-6 col-xl-3">
+        <a href="/catalog/?category=Familiale" class="choice-card">
+          <i class="bi bi-people"></i>
+          <h3>Familiale</h3>
+          <p>Des véhicules pensés pour les familles et les longs trajets.</p>
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="home-section home-section-light steps-section">
+  <div class="container-fluid px-4 px-lg-5">
+    <div class="section-heading text-center">
+      <h2 class="section-title">Votre véhicule en 4 étapes</h2>
+      <p class="section-text">
+        Un parcours simple pour rechercher un véhicule, déposer une demande
+        et suivre votre dossier.
+      </p>
+    </div>
+
+    <div class="steps-feature mt-5">
+      <div class="steps-grid">
+        <div class="step-mini-card">
+          <span class="step-number">1</span>
+          <h3>Choisissez</h3>
+          <p>Parcourez le catalogue et sélectionnez le véhicule qui vous intéresse.</p>
+        </div>
+
+        <div class="step-mini-card">
+          <span class="step-number">2</span>
+          <h3>Déposez</h3>
+          <p>Envoyez votre demande depuis votre espace client ou via le contact.</p>
+        </div>
+
+        <div class="step-mini-card">
+          <span class="step-number">3</span>
+          <h3>Complétez</h3>
+          <p>Ajoutez les documents nécessaires au traitement de votre dossier.</p>
+        </div>
+
+        <div class="step-mini-card">
+          <span class="step-number">4</span>
+          <h3>Suivez</h3>
+          <p>Consultez l’avancement de votre demande depuis votre espace client.</p>
+        </div>
+      </div>
+
+      <div class="steps-image-wrapper">
+        <img
+          src="{% static 'img/home-steps.png' %}"
+          alt="Personne consultant son dossier sur ordinateur"
+          class="steps-image"
+        />
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="benefits">
+  <div class="container-fluid px-4 px-lg-5">
+    <div class="row text-center justify-content-center g-5">
+      <div class="col-lg-4">
+        <div class="benefit-icon">
+          <i class="bi bi-car-front-fill"></i>
+        </div>
+        <h3 class="benefit-title">Véhicules sélectionnés</h3>
+        <p class="benefit-text">
+          Retrouvez une sélection de véhicules disponibles à l’achat ou en location longue durée.
+        </p>
+      </div>
+
+      <div class="col-lg-2">
+        <div class="benefit-icon">
+          <i class="bi bi-sign-turn-right-fill"></i>
+        </div>
+        <h3 class="benefit-title">Achat ou location</h3>
+        <p class="benefit-text">
+          Choisissez la solution adaptée à votre budget et à votre besoin.
+        </p>
+      </div>
+
+      <div class="col-lg-4">
+        <div class="benefit-icon">
+          <i class="bi bi-headset"></i>
+        </div>
+        <h3 class="benefit-title">Suivi en ligne</h3>
+        <p class="benefit-text">
+          Créez votre espace client pour suivre vos demandes et l’avancement de votre dossier.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="home-section">
+  <div class="container-fluid px-4 px-lg-5">
+    <div class="section-heading text-center">
+      <p class="section-label">Questions fréquentes</p>
+      <h2 class="section-title">FAQ</h2>
+    </div>
+
+    <div class="faq-list mt-4">
+      <details class="faq-item">
+        <summary>Puis-je acheter ou louer un véhicule ?</summary>
+        <p>
+          Oui. M Motors propose des véhicules disponibles à l’achat ou en location longue durée.
+        </p>
+      </details>
+
+      <details class="faq-item">
+        <summary>Comment suivre mon dossier ?</summary>
+        <p>
+          Vous pouvez créer un espace client afin de suivre l’avancement de vos demandes en ligne.
+        </p>
+      </details>
+
+      <details class="faq-item">
+        <summary>Quels documents seront nécessaires ?</summary>
+        <p>
+          Les documents demandés peuvent varier selon le type de demande.
+          Ils seront précisés lors de la constitution du dossier.
+        </p>
+      </details>
+
+      <details class="faq-item">
+        <summary>Comment contacter M Motors ?</summary>
+        <p>
+          Vous pouvez utiliser la page contact ou passer par votre espace client une fois connecté.
+        </p>
+      </details>
+    </div>
+  </div>
+</section>
+{% endblock %}

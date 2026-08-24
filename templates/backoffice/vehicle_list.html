@@ -1,0 +1,217 @@
+{% extends "backoffice/base_backoffice.html" %}
+{% load humanize %}
+
+{% block backoffice_title %}Véhicules{% endblock %}
+{% block backoffice_page_title %}Véhicules{% endblock %}
+{% block active_vehicles %}active{% endblock %}
+
+{% block backoffice_content %}
+<div class="row row-cols-1 row-cols-md-3 g-4 mb-4">
+    <div class="col">
+        <div class="admin-kpi-card h-100">
+            <p class="admin-kpi-label">Véhicules</p>
+            <h2 class="admin-kpi-value">{{ total_vehicles }}</h2>
+            <span class="admin-kpi-trend neutral">Catalogue total</span>
+        </div>
+    </div>
+
+    <div class="col">
+        <div class="admin-kpi-card h-100">
+            <p class="admin-kpi-label">Disponibles</p>
+            <h2 class="admin-kpi-value">{{ available_vehicles }}</h2>
+            <span class="admin-kpi-trend positive">En ligne</span>
+        </div>
+    </div>
+
+    <div class="col">
+        <div class="admin-kpi-card h-100">
+            <p class="admin-kpi-label">Indisponibles</p>
+            <h2 class="admin-kpi-value">{{ unavailable_vehicles }}</h2>
+            <span class="admin-kpi-trend neutral">Hors catalogue actif</span>
+        </div>
+    </div>
+</div>
+
+<div class="admin-card">
+    <div class="admin-card-header">
+        <div>
+            <h2 class="admin-card-title">Catalogue véhicules</h2>
+            <p class="admin-page-label">
+                Consultez, ajoutez et modifiez les véhicules disponibles à la vente ou en location.
+            </p>
+        </div>
+
+        <a href="{% url 'backoffice:vehicle_create' %}" class="btn btn-detail">
+            Ajouter un véhicule
+        </a>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table admin-table align-middle">
+            <thead>
+                <tr>
+                    <th>
+                        <a href="?sort=reference&direction={% if sort == 'reference' and direction == 'asc' %}desc{% else %}asc{% endif %}" class="admin-table-link">
+                            Référence
+                            {% if sort == "reference" %}
+                                {% if direction == "asc" %}↑{% else %}↓{% endif %}
+                            {% endif %}
+                        </a>
+                    </th>
+
+                    <th>
+                        <a href="?sort=brand&direction={% if sort == 'brand' and direction == 'asc' %}desc{% else %}asc{% endif %}" class="admin-table-link">
+                            Véhicule
+                            {% if sort == "brand" %}
+                                {% if direction == "asc" %}↑{% else %}↓{% endif %}
+                            {% endif %}
+                        </a>
+                    </th>
+
+                    <th>
+                        <a href="?sort=category&direction={% if sort == 'category' and direction == 'asc' %}desc{% else %}asc{% endif %}" class="admin-table-link">
+                            Catégorie
+                            {% if sort == "category" %}
+                                {% if direction == "asc" %}↑{% else %}↓{% endif %}
+                            {% endif %}
+                        </a>
+                    </th>
+
+                    <th>
+                        <a href="?sort=year&direction={% if sort == 'year' and direction == 'asc' %}desc{% else %}asc{% endif %}" class="admin-table-link">
+                            Année
+                            {% if sort == "year" %}
+                                {% if direction == "asc" %}↑{% else %}↓{% endif %}
+                            {% endif %}
+                        </a>
+                    </th>
+
+                    <th>
+                        <a href="?sort=mileage&direction={% if sort == 'mileage' and direction == 'asc' %}desc{% else %}asc{% endif %}" class="admin-table-link">
+                            Kilométrage
+                            {% if sort == "mileage" %}
+                                {% if direction == "asc" %}↑{% else %}↓{% endif %}
+                            {% endif %}
+                        </a>
+                    </th>
+
+                    <th>
+                        <a href="?sort=offer_type&direction={% if sort == 'offer_type' and direction == 'asc' %}desc{% else %}asc{% endif %}" class="admin-table-link">
+                            Offre
+                            {% if sort == "offer_type" %}
+                                {% if direction == "asc" %}↑{% else %}↓{% endif %}
+                            {% endif %}
+                        </a>
+                    </th>
+
+                    <th>
+                        <a href="?sort=price_sale&direction={% if sort == 'price_sale' and direction == 'asc' %}desc{% else %}asc{% endif %}" class="admin-table-link">
+                            Prix vente
+                            {% if sort == "price_sale" %}
+                                {% if direction == "asc" %}↑{% else %}↓{% endif %}
+                            {% endif %}
+                        </a>
+                    </th>
+
+                    <th>
+                        <a href="?sort=price_monthly&direction={% if sort == 'price_monthly' and direction == 'asc' %}desc{% else %}asc{% endif %}" class="admin-table-link">
+                            Mensualité
+                            {% if sort == "price_monthly" %}
+                                {% if direction == "asc" %}↑{% else %}↓{% endif %}
+                            {% endif %}
+                        </a>
+                    </th>
+
+                    <th>
+                        <a href="?sort=availability_status&direction={% if sort == 'availability_status' and direction == 'asc' %}desc{% else %}asc{% endif %}" class="admin-table-link">
+                            Statut
+                            {% if sort == "availability_status" %}
+                                {% if direction == "asc" %}↑{% else %}↓{% endif %}
+                            {% endif %}
+                        </a>
+                    </th>
+
+                    <th></th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for vehicle in vehicles %}
+                    <tr>
+                        <td>
+                            <strong>{{ vehicle.reference }}</strong>
+                        </td>
+
+                        <td>
+                            {{ vehicle.brand }} {{ vehicle.model }}
+                            {% if vehicle.trim %}
+                                <br>
+                                <span class="admin-page-label">{{ vehicle.trim }}</span>
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            {{ vehicle.category }}
+                        </td>
+
+                        <td>
+                            {{ vehicle.year }}
+                        </td>
+
+                        <td>
+                            {{ vehicle.mileage|intcomma }} km
+                        </td>
+
+                        <td>
+                            {{ vehicle.get_offer_type_display }}
+                        </td>
+
+                        <td>
+                            {% if vehicle.price_sale %}
+                                {{ vehicle.price_sale|floatformat:0|intcomma }} €
+                            {% else %}
+                                —
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            {% if vehicle.price_monthly %}
+                                {{ vehicle.price_monthly|floatformat:0|intcomma }} €/mois
+                            {% else %}
+                                —
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            {% if vehicle.availability_status == "available" %}
+                                <span class="admin-badge approved">
+                                    {{ vehicle.get_availability_status_display }}
+                                </span>
+                            {% else %}
+                                <span class="admin-badge neutral">
+                                    {{ vehicle.get_availability_status_display }}
+                                </span>
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            <a
+                                href="{% url 'backoffice:vehicle_update' vehicle.id %}"
+                                class="admin-table-link d-block mb-2"
+                            >
+                                Modifier
+                            </a>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="10">
+                            Aucun véhicule enregistré pour le moment.
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

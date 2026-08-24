@@ -9,3 +9,11 @@ venv/
 node_modules/
 dist/
 build/
+db.sqlite3
+media/
+staticfiles/
+documents/
+vehicles.json
+# Coverage
+.coverage
+htmlcov/

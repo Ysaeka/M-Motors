@@ -1,0 +1,284 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% load static %}
+
+{% block title %}Catalogue - M Motors{% endblock %}
+
+{% block content %}
+<section class="catalog-hero">
+  <div class="container-fluid px-4 px-lg-5">
+    <h1 class="catalog-hero-title mb-0">Catalogue</h1>
+  </div>
+</section>
+
+<main class="py-5">
+  <div class="container-fluid px-4 px-lg-5">
+    <div class="row g-4">
+
+      <aside class="col-lg-3">
+        <form method="get" class="filter-box" id="catalog-filter-form">
+          <h2 class="filter-title">Filtres</h2>
+
+          <div class="filter-group">
+            <label for="offer_type" class="form-label">Type d'offre</label>
+            <select name="offer_type" id="offer_type" class="form-select">
+              <option value="">Tous</option>
+              <option value="sale" {% if selected_offer_type == "sale" %}selected{% endif %}>Achat</option>
+              <option value="lld" {% if selected_offer_type == "lld" %}selected{% endif %}>Location</option>
+            </select>
+          </div>
+
+          <div class="filter-group">
+            <label for="budget_max" class="form-label">{{ budget_label }}</label>
+            <div class="budget-value">
+              <span id="budgetValue">{{ selected_budget_max }} €</span>
+            </div>
+            <input
+              type="range"
+              class="form-range custom-budget-range"
+              id="budget_max"
+              name="budget_max"
+              min="{{ budget_min }}"
+              max="{{ budget_max_limit }}"
+              step="{{ budget_step }}"
+              value="{{ selected_budget_max }}"
+              oninput="document.getElementById('budgetValue').textContent = new Intl.NumberFormat('fr-FR').format(this.value) + ' €'"
+            />
+          </div>
+
+          <div class="filter-group">
+            <label for="brand" class="form-label">Marque</label>
+            <select name="brand" id="brand" class="form-select">
+              <option value="">Toutes les marques</option>
+              {% for brand in brands %}
+                <option value="{{ brand }}" {% if selected_brand == brand %}selected{% endif %}>
+                  {{ brand }}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="filter-group">
+            <label for="category" class="form-label">Catégorie</label>
+            <select name="category" id="category" class="form-select">
+              <option value="">Toutes les catégories</option>
+
+              {% for category in categories %}
+                <option value="{{ category }}" {% if selected_category == category %}selected{% endif %}>
+                  {{ category }}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="filter-group">
+            <label class="form-label">Énergie</label>
+
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="fuel_type" value="diesel" id="diesel"
+                {% if "diesel" in selected_fuel_types %}checked{% endif %}>
+              <label class="form-check-label" for="diesel">Diesel</label>
+            </div>
+
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="fuel_type" value="gasoline" id="essence"
+                {% if "gasoline" in selected_fuel_types %}checked{% endif %}>
+              <label class="form-check-label" for="essence">Essence</label>
+            </div>
+
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="fuel_type" value="electric" id="electrique"
+                {% if "electric" in selected_fuel_types %}checked{% endif %}>
+              <label class="form-check-label" for="electrique">Électrique</label>
+            </div>
+
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="fuel_type" value="hybrid" id="hybride"
+                {% if "hybrid" in selected_fuel_types %}checked{% endif %}>
+              <label class="form-check-label" for="hybride">Hybride</label>
+            </div>
+          </div>
+
+          <div class="filter-group">
+            <label class="form-label">Boîte</label>
+
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="gearbox" value="manual" id="manuelle"
+                {% if "manual" in selected_gearboxes %}checked{% endif %}>
+              <label class="form-check-label" for="manuelle">Manuelle</label>
+            </div>
+
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="gearbox" value="automatic" id="auto"
+                {% if "automatic" in selected_gearboxes %}checked{% endif %}>
+              <label class="form-check-label" for="auto">Automatique</label>
+            </div>
+          </div>
+
+          <a href="{% url 'vehicle_list' %}" class="btn btn-outline-secondary w-100"><i class="bi bi-arrow-counterclockwise me-2"></i>Réinitialiser les filtres </a>
+          
+        </form>
+      </aside>
+
+        <section class="col-lg-9">
+        <div class="catalog-topbar d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+            <div>
+                <h2 class="catalog-title mb-1">Nos véhicules</h2>
+                <p class="catalog-subtitle mb-0">Trouvez l’offre adaptée à votre besoin</p>
+            </div>
+
+            <form method="get" class="d-flex align-items-center gap-2">
+                {% if selected_offer_type %}
+                <input type="hidden" name="offer_type" value="{{ selected_offer_type }}">
+                {% endif %}
+
+                {% if selected_budget_max %}
+                <input type="hidden" name="budget_max" value="{{ selected_budget_max }}">
+                {% endif %}
+
+                {% if selected_brand %}
+                <input type="hidden" name="brand" value="{{ selected_brand }}">
+                {% endif %}
+
+                {% if selected_category %}
+                <input type="hidden" name="category" value="{{ selected_category }}">
+                {% endif %}
+
+                {% for fuel in selected_fuel_types %}
+                <input type="hidden" name="fuel_type" value="{{ fuel }}">
+                {% endfor %}
+
+                {% for gearbox in selected_gearboxes %}
+                <input type="hidden" name="gearbox" value="{{ gearbox }}">
+                {% endfor %}
+
+                <label for="sort" class="form-label mb-0 text-muted">Trier par</label>
+                <select name="sort" id="sort" class="form-select" onchange="this.form.submit()">
+                <option value="newest" {% if selected_sort == "newest" %}selected{% endif %}>Nouveautés</option>
+                <option value="price_sale_asc" {% if selected_sort == "price_sale_asc" %}selected{% endif %}>Prix achat croissant</option>
+                <option value="price_sale_desc" {% if selected_sort == "price_sale_desc" %}selected{% endif %}>Prix achat décroissant</option>
+                <option value="price_monthly_asc" {% if selected_sort == "price_monthly_asc" %}selected{% endif %}>Mensualité croissante</option>
+                <option value="price_monthly_desc" {% if selected_sort == "price_monthly_desc" %}selected{% endif %}>Mensualité décroissante</option>
+                </select>
+            </form>
+        </div>
+
+        {% if vehicles %}
+          <div class="d-flex flex-column gap-4">
+            {% for vehicle in vehicles %}
+              <article class="vehicle-list-card card border-0 shadow-sm">
+                <div class="row g-0">
+                    <div class="col-md-3">
+                        <div class="vehicle-list-image-wrapper h-100">
+                            {% if vehicle.image %}
+                            <img
+                                src="{% if vehicle.image.name|slice:':4' == 'img/' %}{% static vehicle.image.name %}{% else %}{{ vehicle.image.url }}{% endif %}"
+                                alt="{{ vehicle.brand }} {{ vehicle.model }}"
+                                class="vehicle-list-image"
+                            />
+                            {% else %}
+                            <img
+                                src="{% static 'img/concession.png' %}"
+                                alt="{{ vehicle.brand }} {{ vehicle.model }}"
+                                class="vehicle-list-image"
+                            />
+                            {% endif %}
+                        </div>
+                    </div>
+
+                  <div class="col-md-9">
+                    <div class="card-body p-4">
+                      <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-3">
+                        <div>
+                          <div class="d-flex align-items-center flex-wrap gap-2">
+                            <span class="vehicle-badge">
+                              {{ vehicle.get_availability_status_display }}
+                            </span>
+
+                            {% if vehicle.offer_label %}
+                              <span class="vehicle-offer-badge">
+                                {{ vehicle.offer_label }}
+                              </span>
+                            {% endif %}
+                          </div>
+
+                          <h3 class="vehicle-list-title mt-2 mb-1">
+                            {{ vehicle.brand }} {{ vehicle.model }} {{ vehicle.year }}
+                          </h3>
+                        </div>
+
+                        <div class="text-md-end">
+                          {% if vehicle.price_sale %}
+                            <p class="vehicle-price mb-1">{{ vehicle.price_sale|floatformat:0|intcomma }} €</p>
+                          {% endif %}
+
+                          {% if vehicle.price_monthly %}
+                            <p class="vehicle-rent mb-0">ou {{ vehicle.price_monthly|floatformat:0|intcomma }} €/mois</p>
+                          {% endif %}
+                        </div>
+                        </div>
+                        
+                        <div class="vehicle-list-text mb-3">
+                            {% if request.user.is_staff %}
+                                <p class="mb-2">Référence : {{ vehicle.reference }}</p>
+                            {% endif %}
+                        </div>
+
+                        <div class="vehicle-card-footer">
+                            <div class="vehicle-tags">
+                                {% if vehicle.category %}
+                                <span class="vehicle-tag vehicle-tag-category vehicle-tag-category-{{ vehicle.category|slugify }}">
+                                    {{ vehicle.category }}
+                                </span>
+                                {% endif %}
+
+                                <span class="vehicle-tag vehicle-tag-fuel-{{ vehicle.fuel_type }}">
+                                {{ vehicle.get_fuel_type_display }}
+                                </span>
+
+                                <span class="vehicle-tag vehicle-tag-gearbox-{{ vehicle.gearbox }}">
+                                {{ vehicle.get_gearbox_display }}
+                                </span>
+                            </div>
+
+                            <a href="{% url 'vehicle_detail' vehicle.pk %}" class="btn btn-detail">
+                                Voir le détail
+                            </a>
+                        </div>
+                    </div>
+                  </div>
+                </div>
+              </article>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="alert alert-light border">
+            Aucun véhicule disponible.
+          </div>
+        {% endif %}
+
+        {% if page_obj.has_other_pages %}
+          <nav class="mt-5" aria-label="Pagination catalogue">
+            <div class="d-flex justify-content-center align-items-center gap-3">
+              {% if page_obj.has_previous %}
+                <a class="btn btn-outline-secondary" href="?page={{ page_obj.previous_page_number }}{% if selected_offer_type %}&offer_type={{ selected_offer_type }}{% endif %}{% if selected_budget_max %}&budget_max={{ selected_budget_max }}{% endif %}{% if selected_brand %}&brand={{ selected_brand }}{% endif %}{% for fuel in selected_fuel_types %}&fuel_type={{ fuel }}{% endfor %}{% for gearbox in selected_gearboxes %}&gearbox={{ gearbox }}{% endfor %}">
+                  Précédent
+                </a>
+              {% endif %}
+
+              <span>Page {{ page_obj.number }} sur {{ page_obj.paginator.num_pages }}</span>
+
+              {% if page_obj.has_next %}
+                <a class="btn btn-outline-secondary" href="?{{ query_string }}&page={{ page_obj.next_page_number }}">
+                    Suivant
+                </a>
+              {% endif %}
+            </div>
+          </nav>
+        {% endif %}
+      </section>
+
+    </div>
+  </div>
+</main>
+{% endblock %}

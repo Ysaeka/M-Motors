@@ -1,0 +1,415 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% load static %}
+
+{% block title %}{{ vehicle.brand }} {{ vehicle.model }} - M Motors{% endblock %}
+
+{% block content %}
+<section class="catalog-hero">
+  <div class="container-fluid px-4 px-lg-5">
+    <h1 class="catalog-hero-title mb-0">Détail du véhicule</h1>
+  </div>
+</section>
+
+<section class="py-5">
+  <div class="container-fluid px-4 px-lg-5">
+    <div class="mb-4">
+      <a href="{% url 'vehicle_list' %}" class="btn btn-back">
+        <i class="bi bi-arrow-left me-2"></i>Retour au catalogue
+      </a>
+    </div>
+
+    <div class="vehicle-detail-card card border-0 shadow-sm">
+      <div class="card-body p-4 p-lg-5">
+
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
+          <div>
+            <div class="d-flex align-items-center flex-wrap gap-2">
+              <span class="vehicle-badge">
+                {{ vehicle.get_availability_status_display }}
+              </span>
+
+              {% if vehicle.offer_label %}
+                <span class="vehicle-offer-badge">
+                  {{ vehicle.offer_label }}
+                </span>
+              {% endif %}
+            </div>
+
+            <h2 class="vehicle-detail-title mt-3 mb-1">
+              {{ vehicle.brand }} {{ vehicle.model }} <span>{{ vehicle.year }}</span>
+            </h2>
+
+            <p class="vehicle-list-meta mb-0">
+              {{ vehicle.get_fuel_type_display }} • {{ vehicle.mileage|intcomma }} km • {{ vehicle.get_gearbox_display }}
+            </p>
+
+            {% if request.user.is_staff %}
+              <p class="text-muted mt-2 mb-0">
+                Référence : {{ vehicle.reference }}
+              </p>
+            {% endif %}
+          </div>
+
+          <button class="btn btn-outline-secondary btn-sm" type="button">
+            <i class="bi bi-heart me-2"></i>Ajouter aux favoris
+          </button>
+        </div>
+
+        <div class="vehicle-detail-main row g-4 align-items-stretch mb-4">
+          <div class="col-lg-7">
+            <div class="vehicle-detail-image-wrapper h-100">
+              {% if vehicle.image %}
+                <img
+                  src="{% if vehicle.image.name|slice:':4' == 'img/' %}{% static vehicle.image.name %}{% else %}{{ vehicle.image.url }}{% endif %}"
+                  alt="{{ vehicle.brand }} {{ vehicle.model }}"
+                  class="vehicle-detail-image img-fluid"
+                />
+              {% else %}
+                <img
+                  src="{% static 'img/concession.png' %}"
+                  alt="{{ vehicle.brand }} {{ vehicle.model }}"
+                  class="vehicle-detail-image img-fluid"
+                />
+              {% endif %}
+            </div>
+          </div>
+
+          <div class="col-lg-5">
+            <div class="vehicle-detail-side h-100">
+              {% if vehicle.price_sale %}
+                <div class="price-box">
+                  <p class="price-label mb-2">Prix d’achat</p>
+                  <p class="price-value mb-0">
+                    {{ vehicle.price_sale|floatformat:0|intcomma }} €
+                  </p>
+                </div>
+              {% endif %}
+
+              {% if vehicle.price_monthly %}
+                <div class="price-box">
+                  <p class="price-label mb-2">Location longue durée</p>
+                  <p class="rent-value mb-0">
+                    {{ vehicle.price_monthly|floatformat:0|intcomma }} € <span>/ mois</span>
+                  </p>
+                </div>
+              {% endif %}
+
+              <div class="price-box">
+                <p class="price-label mb-2">Type d’offre</p>
+                <p class="rent-value mb-0">{{ vehicle.get_offer_type_display }}</p>
+                <small class="text-muted">Selon disponibilité du véhicule</small>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="vehicle-quick-info mb-4">
+          <div class="row g-3">
+            <div class="col-md-3 col-6">
+              <div class="quick-info-item">
+                <span class="quick-info-label">Énergie</span>
+                <span class="quick-info-value">{{ vehicle.get_fuel_type_display }}</span>
+              </div>
+            </div>
+
+            <div class="col-md-3 col-6">
+              <div class="quick-info-item">
+                <span class="quick-info-label">Boîte</span>
+                <span class="quick-info-value">{{ vehicle.get_gearbox_display }}</span>
+              </div>
+            </div>
+
+            <div class="col-md-3 col-6">
+              <div class="quick-info-item">
+                <span class="quick-info-label">Kilométrage</span>
+                <span class="quick-info-value">{{ vehicle.mileage|intcomma }} km</span>
+              </div>
+            </div>
+
+            <div class="col-md-3 col-6">
+              <div class="quick-info-item">
+                <span class="quick-info-label">Année</span>
+                <span class="quick-info-value">{{ vehicle.year }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <ul class="nav vehicle-detail-tabs mb-4" id="vehicleDetailTabs" role="tablist">
+          <li class="nav-item" role="presentation">
+            <button
+              class="nav-link active"
+              id="description-tab"
+              data-bs-toggle="tab"
+              data-bs-target="#description-pane"
+              type="button"
+              role="tab"
+              aria-controls="description-pane"
+              aria-selected="true"
+            >
+              Description
+            </button>
+          </li>
+
+          <li class="nav-item" role="presentation">
+            <button
+              class="nav-link"
+              id="features-tab"
+              data-bs-toggle="tab"
+              data-bs-target="#features-pane"
+              type="button"
+              role="tab"
+              aria-controls="features-pane"
+              aria-selected="false"
+            >
+              Caractéristiques
+            </button>
+          </li>
+
+          <li class="nav-item" role="presentation">
+            <button
+              class="nav-link"
+              id="options-tab"
+              data-bs-toggle="tab"
+              data-bs-target="#options-pane"
+              type="button"
+              role="tab"
+              aria-controls="options-pane"
+              aria-selected="false"
+            >
+              Options incluses
+            </button>
+          </li>
+        </ul>
+
+        <div class="vehicle-detail-content tab-content mb-4" id="vehicleDetailTabsContent">
+          <div
+            class="tab-pane fade show active"
+            id="description-pane"
+            role="tabpanel"
+            aria-labelledby="description-tab"
+            tabindex="0"
+          >
+            {% if vehicle.description %}
+              {{ vehicle.description|linebreaks }}
+            {% else %}
+              <p class="text-muted mb-0">
+                Aucune description détaillée n’est encore disponible pour ce véhicule.
+              </p>
+            {% endif %}
+          </div>
+
+          <div
+            class="tab-pane fade"
+            id="features-pane"
+            role="tabpanel"
+            aria-labelledby="features-tab"
+            tabindex="0"
+          >
+            <div class="row g-4">
+              <div class="col-lg-6">
+                <h3 class="h5 mb-3">Informations générales</h3>
+
+                <div class="row g-3">
+                  <div class="col-md-6">
+                    <div class="feature-item">
+                      <i class="bi bi-check-circle-fill"></i>
+                      <span>Finition : {{ vehicle.trim|default:"Non renseignée" }}</span>
+                    </div>
+                  </div>
+
+                  <div class="col-md-6">
+                    <div class="feature-item">
+                      <i class="bi bi-check-circle-fill"></i>
+                      <span>Catégorie : {{ vehicle.category|default:"Non renseignée" }}</span>
+                    </div>
+                  </div>
+
+                  <div class="col-md-6">
+                    <div class="feature-item">
+                      <i class="bi bi-check-circle-fill"></i>
+                      <span>Couleur : {{ vehicle.color|default:"Non renseignée" }}</span>
+                    </div>
+                  </div>
+
+                  <div class="col-md-6">
+                    <div class="feature-item">
+                      <i class="bi bi-check-circle-fill"></i>
+                      <span>
+                        Portes :
+                        {% if vehicle.doors %}
+                          {{ vehicle.doors }}
+                        {% else %}
+                          Non renseigné
+                        {% endif %}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div class="col-md-6">
+                    <div class="feature-item">
+                      <i class="bi bi-check-circle-fill"></i>
+                      <span>
+                        Places :
+                        {% if vehicle.seats %}
+                          {{ vehicle.seats }}
+                        {% else %}
+                          Non renseigné
+                        {% endif %}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div class="col-md-6">
+                    <div class="feature-item">
+                      <i class="bi bi-check-circle-fill"></i>
+                      <span>Garantie : {{ vehicle.warranty|default:"Non renseignée" }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-lg-6">
+                <h3 class="h5 mb-3">Motorisation</h3>
+
+                <div class="row g-3">
+                  <div class="col-md-6">
+                    <div class="feature-item">
+                      <i class="bi bi-check-circle-fill"></i>
+                      <span>Énergie : {{ vehicle.get_fuel_type_display }}</span>
+                    </div>
+                  </div>
+
+                  <div class="col-md-6">
+                    <div class="feature-item">
+                      <i class="bi bi-check-circle-fill"></i>
+                      <span>Boîte : {{ vehicle.get_gearbox_display }}</span>
+                    </div>
+                  </div>
+
+                  <div class="col-md-6">
+                    <div class="feature-item">
+                      <i class="bi bi-check-circle-fill"></i>
+                      <span>
+                        Puissance fiscale :
+                        {% if vehicle.fiscal_power %}
+                          {{ vehicle.fiscal_power }} CV
+                        {% else %}
+                          Non renseignée
+                        {% endif %}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div class="col-md-6">
+                    <div class="feature-item">
+                      <i class="bi bi-check-circle-fill"></i>
+                      <span>
+                        Puissance DIN :
+                        {% if vehicle.power_hp %}
+                          {{ vehicle.power_hp }} ch
+                        {% else %}
+                          Non renseignée
+                        {% endif %}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div class="col-md-6">
+                    <div class="feature-item">
+                      <i class="bi bi-check-circle-fill"></i>
+                      <span>
+                        Émissions CO2 :
+                        {% if vehicle.co2_emissions %}
+                          {{ vehicle.co2_emissions }} g/km
+                        {% else %}
+                          Non renseignées
+                        {% endif %}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div class="col-md-6">
+                    <div class="feature-item">
+                      <i class="bi bi-check-circle-fill"></i>
+                      <span>
+                        Consommation :
+                        {% if vehicle.consumption %}
+                          {{ vehicle.consumption }} L/100 km
+                        {% else %}
+                          Non renseignée
+                        {% endif %}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div class="col-md-6">
+                    <div class="feature-item">
+                      <i class="bi bi-check-circle-fill"></i>
+                      <span>Crit’Air : {{ vehicle.crit_air|default:"Non renseignée" }}</span>
+                    </div>
+                  </div>
+
+                  <div class="col-md-6">
+                    <div class="feature-item">
+                      <i class="bi bi-check-circle-fill"></i>
+                      <span>Disponibilité : {{ vehicle.get_availability_status_display }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div
+            class="tab-pane fade"
+            id="options-pane"
+            role="tabpanel"
+            aria-labelledby="options-tab"
+            tabindex="0"
+          >
+            {% if vehicle.included_options_list %}
+              <div class="row g-3">
+                {% for option in vehicle.included_options_list %}
+                  <div class="col-md-4">
+                    <div class="feature-item">
+                      <i class="bi bi-check-circle-fill"></i>
+                      <span>{{ option }}</span>
+                    </div>
+                  </div>
+                {% endfor %}
+              </div>
+            {% else %}
+              <p class="text-muted mb-0">
+                Les options incluses n’ont pas encore été renseignées pour ce véhicule.
+              </p>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="vehicle-detail-actions d-flex flex-column flex-md-row gap-3">
+          {% if vehicle.offer_type == "sale" or vehicle.offer_type == "both" %}
+            <a
+              href="{% url 'start_dossier' vehicle.pk 'sale' %}"
+              class="btn btn-secondary-detail flex-fill"
+            >
+              Acheter ce véhicule
+            </a>
+          {% endif %}
+
+          {% if vehicle.offer_type == "lld" or vehicle.offer_type == "both" %}
+            <a
+              href="{% url 'start_dossier' vehicle.pk 'lld' %}"
+              class="btn btn-detail flex-fill"
+            >
+              Louer ce véhicule
+            </a>
+          {% endif %}
+        </div>
+
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
