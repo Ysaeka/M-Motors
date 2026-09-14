@@ -153,6 +153,46 @@ class ClientAuthViewTests(TestCase):
         self.assertEqual(user.client_profile.phone, "0600000000")
         self.assertEqual(user.client_profile.address, "10 rue du Test")
 
+    def test_user_cannot_use_another_users_email_in_profile(self):
+        """
+        Un utilisateur ne doit pas pouvoir modifier son profil
+        avec une adresse email déjà utilisée par un autre compte.
+        """
+        User.objects.create_user(
+            username="otheruser",
+            email="alreadyused@example.com",
+            password="VoitureBleue!7842",
+        )
+
+        user = User.objects.create_user(
+            username="clientemail",
+            email="clientemail@example.com",
+            password="VoitureBleue!7842",
+        )
+
+        self.client.force_login(user)
+
+        response = self.client.post(
+            reverse("accounts:profil"),
+            data={
+                "first_name": "Ysaeka",
+                "last_name": "Falletta",
+                "email": "alreadyused@example.com",
+                "phone": "0600000000",
+                "address": "10 rue du Test",
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+
+        user.refresh_from_db()
+
+        self.assertEqual(user.email, "clientemail@example.com")
+        self.assertContains(
+            response,
+            "Un compte utilise déjà cette adresse email.",
+        )
+
     def test_login_page_contains_password_reset_link(self):
         """
         La page de connexion doit proposer un lien "mot de passe oublié".
