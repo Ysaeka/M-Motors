@@ -824,3 +824,195 @@ class DossierRequestTests(TestCase):
             dossier.lld_duration_months,
             36,
         )
+
+    def test_submitting_dossier_reserves_vehicle(self):
+        """
+        La soumission d'un dossier doit réserver immédiatement
+        le véhicule associé.
+        """
+        self.client.login(
+            username="clienttest",
+            password="Testpass123!",
+        )
+
+        dossier = Dossier.objects.create(
+            customer=self.user,
+            vehicle=self.vehicle,
+            application_type=Dossier.ApplicationType.SALE,
+            status=Dossier.Status.DRAFT,
+        )
+
+        response = self.client.post(
+            reverse(
+                "submit_dossier",
+                args=[dossier.pk],
+            )
+        )
+
+        dossier.refresh_from_db()
+        self.vehicle.refresh_from_db()
+
+        self.assertRedirects(
+            response,
+            reverse(
+                "dossier_detail",
+                args=[dossier.pk],
+            ),
+        )
+
+        self.assertEqual(
+            dossier.status,
+            Dossier.Status.SUBMITTED,
+        )
+
+        self.assertEqual(
+            self.vehicle.availability_status,
+            Vehicle.AvailabilityStatus.RESERVED,
+        )
+
+
+    def test_second_client_cannot_submit_dossier_for_reserved_vehicle(self):
+        """
+        Si deux clients possèdent un brouillon pour le même véhicule,
+        seul le premier qui soumet peut réserver le véhicule.
+        """
+        User = get_user_model()
+
+        second_user = User.objects.create_user(
+            username="secondclient",
+            email="secondclient@example.com",
+            password="Testpass123!",
+        )
+
+        first_dossier = Dossier.objects.create(
+            customer=self.user,
+            vehicle=self.vehicle,
+            application_type=Dossier.ApplicationType.SALE,
+            status=Dossier.Status.DRAFT,
+        )
+
+        second_dossier = Dossier.objects.create(
+            customer=second_user,
+            vehicle=self.vehicle,
+            application_type=Dossier.ApplicationType.SALE,
+            status=Dossier.Status.DRAFT,
+        )
+
+        self.client.login(
+            username="clienttest",
+            password="Testpass123!",
+        )
+
+        first_response = self.client.post(
+            reverse(
+                "submit_dossier",
+                args=[first_dossier.pk],
+            )
+        )
+
+        first_dossier.refresh_from_db()
+        self.vehicle.refresh_from_db()
+
+        self.assertRedirects(
+            first_response,
+            reverse(
+                "dossier_detail",
+                args=[first_dossier.pk],
+            ),
+        )
+
+        self.assertEqual(
+            first_dossier.status,
+            Dossier.Status.SUBMITTED,
+        )
+
+        self.assertEqual(
+            self.vehicle.availability_status,
+            Vehicle.AvailabilityStatus.RESERVED,
+        )
+
+        self.client.logout()
+
+        self.client.login(
+            username="secondclient",
+            password="Testpass123!",
+        )
+
+        second_response = self.client.post(
+            reverse(
+                "submit_dossier",
+                args=[second_dossier.pk],
+            )
+        )
+
+        second_dossier.refresh_from_db()
+        self.vehicle.refresh_from_db()
+
+        self.assertRedirects(
+            second_response,
+            reverse(
+                "vehicle_detail",
+                args=[self.vehicle.pk],
+            ),
+        )
+
+        self.assertEqual(
+            second_dossier.status,
+            Dossier.Status.DRAFT,
+        )
+
+        self.assertIsNone(
+            second_dossier.submitted_at,
+        )
+
+        self.assertEqual(
+            self.vehicle.availability_status,
+            Vehicle.AvailabilityStatus.RESERVED,
+        )
+
+
+    def test_user_cannot_start_dossier_for_unavailable_vehicle(self):
+        """
+        Aucun nouveau dossier ne doit pouvoir être créé
+        pour un véhicule déjà réservé.
+        """
+        self.vehicle.availability_status = (
+            Vehicle.AvailabilityStatus.RESERVED
+        )
+
+        self.vehicle.save(
+            update_fields=[
+                "availability_status",
+                "updated_at",
+            ]
+        )
+
+        self.client.login(
+            username="clienttest",
+            password="Testpass123!",
+        )
+
+        response = self.client.post(
+            reverse(
+                "start_dossier",
+                args=[
+                    self.vehicle.pk,
+                    Dossier.ApplicationType.SALE,
+                ],
+            )
+        )
+
+        self.assertRedirects(
+            response,
+            reverse(
+                "vehicle_detail",
+                args=[self.vehicle.pk],
+            ),
+        )
+
+        self.assertFalse(
+            Dossier.objects.filter(
+                customer=self.user,
+                vehicle=self.vehicle,
+            ).exists()
+        )

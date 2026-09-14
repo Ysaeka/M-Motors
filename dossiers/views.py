@@ -1,6 +1,8 @@
 from decimal import Decimal
 
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.db import transaction
 from django.http import FileResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
@@ -63,6 +65,69 @@ def can_replace_rejected_document(dossier, document_type):
         document_type=document_type,
         validation_status=Document.ValidationStatus.REJECTED,
     ).exists()
+
+
+def submit_dossier_and_reserve_vehicle(dossier, changed_by, comment):
+    """
+    Soumet un dossier et réserve son véhicule dans une transaction.
+
+    Le véhicule est verrouillé pendant l'opération afin d'éviter que
+    deux dossiers différents puissent réserver le même véhicule
+    simultanément.
+
+    Retourne le dossier soumis si l'opération réussit.
+    Retourne None si le dossier n'est plus en brouillon ou si le
+    véhicule n'est plus disponible.
+    """
+    with transaction.atomic():
+        locked_dossier = (
+            Dossier.objects.select_for_update()
+            .select_related("vehicle")
+            .get(pk=dossier.pk)
+        )
+
+        if locked_dossier.status != Dossier.Status.DRAFT:
+            return None
+
+        vehicle = Vehicle.objects.select_for_update().get(
+            pk=locked_dossier.vehicle_id
+        )
+
+        if vehicle.availability_status != Vehicle.AvailabilityStatus.AVAILABLE:
+            return None
+
+        old_status = locked_dossier.status
+        submitted_at = timezone.now()
+
+        # La soumission du dossier réserve immédiatement le véhicule.
+        vehicle.availability_status = Vehicle.AvailabilityStatus.RESERVED
+        vehicle.save(
+            update_fields=[
+                "availability_status",
+                "updated_at",
+            ]
+        )
+
+        locked_dossier.status = Dossier.Status.SUBMITTED
+        locked_dossier.submitted_at = submitted_at
+
+        locked_dossier.save(
+            update_fields=[
+                "status",
+                "submitted_at",
+                "updated_at",
+            ]
+        )
+
+        DossierStatusHistory.objects.create(
+            dossier=locked_dossier,
+            old_status=old_status,
+            new_status=locked_dossier.status,
+            changed_by=changed_by,
+            comment=comment,
+        )
+
+        return locked_dossier
 
 
 """Affiche la liste des dossiers appartenant au client connecté."""
@@ -214,8 +279,8 @@ def start_dossier(request, vehicle_pk, application_type):
     ):
         return redirect("vehicle_detail", pk=vehicle.pk)
 
-    # Si un dossier actif existe déjà pour ce véhicule et ce type de demande,
-    # on le réutilise pour éviter les doublons côté client.
+    # Si le client possède déjà un dossier actif pour ce véhicule
+    # et ce type de demande, on le redirige vers ce dossier.
     dossier = (
         Dossier.objects.filter(
             customer=request.user,
@@ -227,21 +292,32 @@ def start_dossier(request, vehicle_pk, application_type):
         .first()
     )
 
-    if dossier is None:
-        dossier = Dossier.objects.create(
-            customer=request.user,
-            vehicle=vehicle,
-            application_type=application_type,
-            status=Dossier.Status.DRAFT,
-        )
+    if dossier is not None:
+        return redirect("dossier_detail", pk=dossier.pk)
 
-        DossierStatusHistory.objects.create(
-            dossier=dossier,
-            old_status=Dossier.Status.DRAFT,
-            new_status=Dossier.Status.DRAFT,
-            changed_by=request.user,
-            comment="Création de la demande",
+    # Aucun nouveau dossier ne peut être créé pour un véhicule
+    # déjà réservé, vendu, loué ou rendu indisponible.
+    if vehicle.availability_status != Vehicle.AvailabilityStatus.AVAILABLE:
+        messages.error(
+            request,
+            "Ce véhicule n'est plus disponible pour une nouvelle demande.",
         )
+        return redirect("vehicle_detail", pk=vehicle.pk)
+
+    dossier = Dossier.objects.create(
+        customer=request.user,
+        vehicle=vehicle,
+        application_type=application_type,
+        status=Dossier.Status.DRAFT,
+    )
+
+    DossierStatusHistory.objects.create(
+        dossier=dossier,
+        old_status=Dossier.Status.DRAFT,
+        new_status=Dossier.Status.DRAFT,
+        changed_by=request.user,
+        comment="Création de la demande",
+    )
 
     return redirect("dossier_detail", pk=dossier.pk)
 
@@ -470,23 +546,8 @@ def complete_dossier(request, pk):
                 is_dossier_complete
                 and dossier.status == Dossier.Status.DRAFT
             ):
-                old_status = dossier.status
-
-                dossier.status = Dossier.Status.SUBMITTED
-                dossier.submitted_at = timezone.now()
-
-                dossier.save(
-                    update_fields=[
-                        "status",
-                        "submitted_at",
-                        "updated_at",
-                    ]
-                )
-
-                DossierStatusHistory.objects.create(
+                submitted_dossier = submit_dossier_and_reserve_vehicle(
                     dossier=dossier,
-                    old_status=old_status,
-                    new_status=dossier.status,
                     changed_by=request.user,
                     comment=(
                         "Dossier soumis par le client "
@@ -494,9 +555,22 @@ def complete_dossier(request, pk):
                     ),
                 )
 
+                if submitted_dossier is None:
+                    messages.error(
+                        request,
+                        (
+                            "Ce véhicule n'est plus disponible. "
+                            "Votre dossier n'a pas été soumis."
+                        ),
+                    )
+                    return redirect(
+                        "vehicle_detail",
+                        pk=dossier.vehicle_id,
+                    )
+
                 return redirect(
                     "dossier_detail",
-                    pk=dossier.pk,
+                    pk=submitted_dossier.pk,
                 )
 
         else:
@@ -537,30 +611,28 @@ def submit_dossier(request, pk):
         status=Dossier.Status.DRAFT,
     )
 
-    old_status = dossier.status
-
-    dossier.status = Dossier.Status.SUBMITTED
-    dossier.submitted_at = timezone.now()
-
-    dossier.save(
-        update_fields=[
-            "status",
-            "submitted_at",
-            "updated_at",
-        ]
-    )
-
-    DossierStatusHistory.objects.create(
+    submitted_dossier = submit_dossier_and_reserve_vehicle(
         dossier=dossier,
-        old_status=old_status,
-        new_status=dossier.status,
         changed_by=request.user,
         comment="Demande confirmée par le client",
     )
 
+    if submitted_dossier is None:
+        messages.error(
+            request,
+            (
+                "Ce véhicule n'est plus disponible. "
+                "Votre dossier n'a pas été soumis."
+            ),
+        )
+        return redirect(
+            "vehicle_detail",
+            pk=dossier.vehicle_id,
+        )
+
     return redirect(
         "dossier_detail",
-        pk=dossier.pk,
+        pk=submitted_dossier.pk,
     )
 
 
