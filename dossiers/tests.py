@@ -1,11 +1,28 @@
+from io import BytesIO
+
 from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from django.urls import reverse
+from pypdf import PdfWriter
 
 from catalog.models import Vehicle
 
 from .models import Document, Dossier, DossierStatusHistory
+
+
+def create_valid_pdf():
+    """Génère un petit PDF valide en mémoire pour les tests."""
+    buffer = BytesIO()
+
+    writer = PdfWriter()
+    writer.add_blank_page(
+        width=72,
+        height=72,
+    )
+    writer.write(buffer)
+
+    return buffer.getvalue()
 
 
 class DossierRequestTests(TestCase):
@@ -327,7 +344,7 @@ class DossierRequestTests(TestCase):
 
         uploaded_file = SimpleUploadedFile(
             "identity.pdf",
-            b"fake pdf content",
+            create_valid_pdf(),
             content_type="application/pdf",
         )
 
@@ -364,7 +381,7 @@ class DossierRequestTests(TestCase):
 
         uploaded_file = SimpleUploadedFile(
             "identity.pdf",
-            b"fake pdf content",
+            create_valid_pdf(),
             content_type="application/pdf",
         )
 
@@ -408,7 +425,7 @@ class DossierRequestTests(TestCase):
 
         uploaded_file = SimpleUploadedFile(
             "identity.pdf",
-            b"fake pdf content",
+            create_valid_pdf(),
             content_type="application/pdf",
         )
 
@@ -564,7 +581,7 @@ class DossierRequestTests(TestCase):
 
         uploaded_file = SimpleUploadedFile(
             "identity.pdf",
-            b"fake pdf content",
+            create_valid_pdf(),
             content_type="application/pdf",
         )
 
@@ -614,7 +631,7 @@ class DossierRequestTests(TestCase):
 
         old_file = SimpleUploadedFile(
             "old_identity.pdf",
-            b"old fake pdf content",
+            create_valid_pdf(),
             content_type="application/pdf",
         )
 
@@ -628,7 +645,7 @@ class DossierRequestTests(TestCase):
 
         replacement_file = SimpleUploadedFile(
             "new_identity.pdf",
-            b"new fake pdf content",
+            create_valid_pdf(),
             content_type="application/pdf",
         )
 
@@ -694,7 +711,7 @@ class DossierRequestTests(TestCase):
 
         old_file = SimpleUploadedFile(
             "old_identity.pdf",
-            b"old fake pdf content",
+            create_valid_pdf(),
             content_type="application/pdf",
         )
 
@@ -709,7 +726,7 @@ class DossierRequestTests(TestCase):
 
         replacement_file = SimpleUploadedFile(
             "new_identity.pdf",
-            b"new fake pdf content",
+            create_valid_pdf(),
             content_type="application/pdf",
         )
 
