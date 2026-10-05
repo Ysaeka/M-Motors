@@ -749,6 +749,15 @@ def dossier_detail(request, pk):
                 )
 
                 document.rejection_reason = ""
+                document.validated_at = timezone.now()
+
+                document.save(
+                    update_fields=[
+                        "validation_status",
+                        "rejection_reason",
+                        "validated_at",
+                    ]
+                )
 
                 django_messages.success(
                     request,
@@ -756,17 +765,35 @@ def dossier_detail(request, pk):
                 )
 
             else:
+                rejection_reason = request.POST.get(
+                    "rejection_reason",
+                    "",
+                ).strip()
+
+                if not rejection_reason:
+                    django_messages.error(
+                        request,
+                        "Le motif de refus est obligatoire.",
+                    )
+
+                    return redirect(
+                        "backoffice:dossier_detail",
+                        pk=dossier.pk,
+                    )
+
                 document.validation_status = (
                     Document.ValidationStatus.REJECTED
                 )
 
-                document.rejection_reason = (
-                    "Document refusé depuis le back-office."
-                )
+                document.rejection_reason = rejection_reason
+                document.validated_at = timezone.now()
 
-                django_messages.success(
-                    request,
-                    "Le document a bien été refusé.",
+                document.save(
+                    update_fields=[
+                        "validation_status",
+                        "rejection_reason",
+                        "validated_at",
+                    ]
                 )
 
                 notify_customer_document_rejected(
@@ -775,15 +802,10 @@ def dossier_detail(request, pk):
                     document,
                 )
 
-            document.validated_at = timezone.now()
-
-            document.save(
-                update_fields=[
-                    "validation_status",
-                    "rejection_reason",
-                    "validated_at",
-                ]
-            )
+                django_messages.success(
+                    request,
+                    "Le document a bien été refusé.",
+                )
 
             return redirect(
                 "backoffice:dossier_detail",
