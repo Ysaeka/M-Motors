@@ -1,3 +1,4 @@
+from django.contrib.auth.models import User
 from django.test import TestCase
 
 from accounts.forms import ClientSignUpForm
@@ -67,3 +68,22 @@ class ClientSignUpFormTests(TestCase):
 
         self.assertFalse(form.is_valid())
         self.assertIn("password2", form.errors)
+
+    def test_form_is_invalid_when_email_already_exists(self):
+        User.objects.create_user(
+            username="existinguser",
+            email="existing@example.com",
+            password="VoitureBleue!7842",
+        )
+
+        form = ClientSignUpForm(
+            data={
+                "username": "newuser",
+                "email": "EXISTING@example.com",
+                "password1": "VoitureBleue!7842",
+                "password2": "VoitureBleue!7842",
+            }
+        )
+
+        self.assertFalse(form.is_valid())
+        self.assertIn("email", form.errors)

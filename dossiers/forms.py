@@ -1,14 +1,22 @@
 from datetime import date
+from pathlib import Path
 
 from django import forms
+from PIL import Image, UnidentifiedImageError
+from pypdf import PdfReader
+from pypdf.errors import PdfReadError
 
-from .models import Dossier
-from .models import DossierAdvisorMessage
+from .models import Dossier, DossierAdvisorMessage
 
-"""Formulaire de complétion des informations personnelles du dossier client.
-   Il centralise les règles métier nécessaires avant le traitement d'une demande :
-    majorité du client, adresse complète, consentement RGPD et cohérence financière.
+
 """
+Formulaire de complétion des informations personnelles du dossier client.
+
+Il centralise les règles métier nécessaires avant le traitement d'une demande :
+majorité du client, adresse complète, consentement RGPD et cohérence financière.
+"""
+
+
 class DossierCompletionForm(forms.ModelForm):
     class Meta:
         model = Dossier
@@ -31,8 +39,13 @@ class DossierCompletionForm(forms.ModelForm):
             "housing_status": "Situation de logement",
             "monthly_rent": "Montant du loyer mensuel",
             "has_current_credit": "Avez-vous un crédit en cours ?",
-            "monthly_credit_amount": "Montant total des mensualités de crédit",
-            "data_processing_consent": "J’accepte le traitement de mes données dans le cadre de ma demande.",
+            "monthly_credit_amount": (
+                "Montant total des mensualités de crédit"
+            ),
+            "data_processing_consent": (
+                "J’accepte le traitement de mes données "
+                "dans le cadre de ma demande."
+            ),
         }
         widgets = {
             "birth_date": forms.DateInput(
@@ -43,10 +56,10 @@ class DossierCompletionForm(forms.ModelForm):
                 },
             ),
             "address": forms.TextInput(
-                    attrs={
-                        "class": "form-control finance-input",
-                        "placeholder": "Adresse complète",
-                    }
+                attrs={
+                    "class": "form-control finance-input",
+                    "placeholder": "Adresse complète",
+                }
             ),
             "postal_code": forms.TextInput(
                 attrs={
@@ -62,8 +75,8 @@ class DossierCompletionForm(forms.ModelForm):
             ),
             "housing_status": forms.Select(
                 attrs={
-                    "class": "form-select finance-input"
-                    }
+                    "class": "form-select finance-input",
+                }
             ),
             "monthly_rent": forms.NumberInput(
                 attrs={
@@ -73,9 +86,14 @@ class DossierCompletionForm(forms.ModelForm):
                     "step": "0.01",
                 }
             ),
-           "has_current_credit": forms.RadioSelect(
-                choices=((True, "Oui"), (False, "Non")),
-                attrs={"class": "form-check-input"},
+            "has_current_credit": forms.RadioSelect(
+                choices=(
+                    (True, "Oui"),
+                    (False, "Non"),
+                ),
+                attrs={
+                    "class": "form-check-input",
+                },
             ),
             "monthly_credit_amount": forms.NumberInput(
                 attrs={
@@ -86,13 +104,18 @@ class DossierCompletionForm(forms.ModelForm):
                 }
             ),
             "data_processing_consent": forms.CheckboxInput(
-                attrs={"class": "form-check-input"}
+                attrs={
+                    "class": "form-check-input",
+                }
             ),
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["birth_date"].input_formats = ["%Y-%m-%d"]
+
+        self.fields["birth_date"].input_formats = [
+            "%Y-%m-%d",
+        ]
 
     def clean(self):
         cleaned_data = super().clean()
@@ -103,53 +126,91 @@ class DossierCompletionForm(forms.ModelForm):
         city = cleaned_data.get("city")
         housing_status = cleaned_data.get("housing_status")
         monthly_rent = cleaned_data.get("monthly_rent")
-        has_current_credit = cleaned_data.get("has_current_credit")
-        monthly_credit_amount = cleaned_data.get("monthly_credit_amount")
-        data_processing_consent = cleaned_data.get("data_processing_consent")
+        has_current_credit = cleaned_data.get(
+            "has_current_credit"
+        )
+        monthly_credit_amount = cleaned_data.get(
+            "monthly_credit_amount"
+        )
+        data_processing_consent = cleaned_data.get(
+            "data_processing_consent"
+        )
 
         if birth_date is None:
-            self.add_error("birth_date", "Veuillez renseigner votre date de naissance.")
+            self.add_error(
+                "birth_date",
+                "Veuillez renseigner votre date de naissance.",
+            )
+
         else:
             today = date.today()
+
             age = (
                 today.year
                 - birth_date.year
-                - ((today.month, today.day) < (birth_date.month, birth_date.day))
+                - (
+                    (today.month, today.day)
+                    < (birth_date.month, birth_date.day)
+                )
             )
 
             if age < 18:
                 self.add_error(
                     "birth_date",
-                    "Vous devez avoir au moins 18 ans pour déposer une demande.",
+                    (
+                        "Vous devez avoir au moins 18 ans "
+                        "pour déposer une demande."
+                    ),
                 )
 
         if not address:
-            self.add_error("address", "Veuillez renseigner votre adresse.")
+            self.add_error(
+                "address",
+                "Veuillez renseigner votre adresse.",
+            )
 
         if not postal_code:
-            self.add_error("postal_code", "Veuillez renseigner votre code postal.")
+            self.add_error(
+                "postal_code",
+                "Veuillez renseigner votre code postal.",
+            )
 
         if not city:
-            self.add_error("city", "Veuillez renseigner votre ville.")
+            self.add_error(
+                "city",
+                "Veuillez renseigner votre ville.",
+            )
 
         if not data_processing_consent:
             self.add_error(
                 "data_processing_consent",
-                "Vous devez accepter le traitement de vos données pour continuer.",
+                (
+                    "Vous devez accepter le traitement "
+                    "de vos données pour continuer."
+                ),
             )
 
-        # Certaines informations financières ne sont obligatoires que selon la situation déclarée par le client.
-
-        if housing_status == Dossier.HousingStatus.TENANT and monthly_rent in [None, ""]:
+        # Certaines informations financières ne sont obligatoires
+        # que selon la situation déclarée par le client.
+        if (
+            housing_status == Dossier.HousingStatus.TENANT
+            and monthly_rent in [None, ""]
+        ):
             self.add_error(
                 "monthly_rent",
                 "Veuillez renseigner le montant de votre loyer.",
             )
 
-        if has_current_credit and monthly_credit_amount in [None, ""]:
+        if (
+            has_current_credit
+            and monthly_credit_amount in [None, ""]
+        ):
             self.add_error(
                 "monthly_credit_amount",
-                "Veuillez renseigner le montant de vos mensualités de crédit.",
+                (
+                    "Veuillez renseigner le montant "
+                    "de vos mensualités de crédit."
+                ),
             )
 
         return cleaned_data
@@ -161,63 +222,240 @@ class DocumentUploadForm(forms.Form):
         choices=[],
         widget=forms.HiddenInput(),
     )
+
     file = forms.FileField(
         label="Fichier",
-        widget=forms.FileInput(attrs={"class": "form-control finance-file-input"}),
+        widget=forms.FileInput(
+            attrs={
+                "class": "form-control finance-file-input",
+            }
+        ),
     )
 
-    allowed_content_types = [
-        "application/pdf",
-        "image/jpeg",
-        "image/png",
-    ]
+    allowed_extensions = {
+        ".pdf",
+        ".jpg",
+        ".jpeg",
+        ".png",
+    }
+
     max_file_size = 5 * 1024 * 1024
 
-    def __init__(self, *args, allowed_document_types=None, **kwargs):
+    def __init__(
+        self,
+        *args,
+        allowed_document_types=None,
+        **kwargs,
+    ):
         super().__init__(*args, **kwargs)
 
-        # Les types autorisés dépendent de l'état du dossier et des documents attendus.
+        # Les types autorisés dépendent de l'état du dossier
+        # et des documents attendus.
         if allowed_document_types is None:
             allowed_document_types = []
 
-        self.fields["document_type"].choices = allowed_document_types
+        self.fields["document_type"].choices = (
+            allowed_document_types
+        )
 
     def clean_file(self):
-        file = self.cleaned_data["file"]
+        """
+        Vérifie la taille, l'extension et surtout le contenu réel
+        du fichier envoyé.
 
-        if file.content_type not in self.allowed_content_types:
+        Le contrôle ne repose pas sur le content_type transmis
+        par le navigateur car cette valeur peut être falsifiée.
+        """
+        uploaded_file = self.cleaned_data["file"]
+
+        extension = Path(
+            uploaded_file.name
+        ).suffix.lower()
+
+        if extension not in self.allowed_extensions:
             raise forms.ValidationError(
-                "Format non autorisé. Merci d’envoyer un fichier PDF, JPG ou PNG."
+                (
+                    "Format non autorisé. "
+                    "Merci d’envoyer un fichier PDF, JPG ou PNG."
+                )
             )
 
-        if file.size > self.max_file_size:
+        if uploaded_file.size > self.max_file_size:
             raise forms.ValidationError(
-                "Le fichier est trop lourd. Taille maximum autorisée : 5 Mo."
+                (
+                    "Le fichier est trop lourd. "
+                    "Taille maximum autorisée : 5 Mo."
+                )
             )
 
-        return file
+        if uploaded_file.size == 0:
+            raise forms.ValidationError(
+                "Le fichier envoyé est vide."
+            )
 
-"""Formulaire permettant au client d'envoyer un message à un conseiller."""
+        if extension == ".pdf":
+            self._validate_pdf(uploaded_file)
+
+        else:
+            self._validate_image(
+                uploaded_file,
+                extension,
+            )
+
+        # Les bibliothèques de validation déplacent le curseur
+        # dans le fichier. On le remet au début avant que Django
+        # ne procède à son enregistrement.
+        uploaded_file.seek(0)
+
+        return uploaded_file
+
+    def _validate_pdf(self, uploaded_file):
+        """
+        Vérifie qu'un fichier portant l'extension PDF
+        contient réellement un document PDF lisible.
+        """
+        try:
+            uploaded_file.seek(0)
+
+            signature = uploaded_file.read(5)
+
+            if signature != b"%PDF-":
+                raise forms.ValidationError(
+                    (
+                        "Le fichier envoyé n'est pas "
+                        "un document PDF valide."
+                    )
+                )
+
+            uploaded_file.seek(0)
+
+            reader = PdfReader(
+                uploaded_file,
+                strict=False,
+            )
+
+            if reader.is_encrypted:
+                raise forms.ValidationError(
+                    (
+                        "Les fichiers PDF protégés par un mot "
+                        "de passe ne sont pas autorisés."
+                    )
+                )
+
+            # L'accès aux pages oblige pypdf à analyser
+            # réellement la structure du document.
+            if len(reader.pages) == 0:
+                raise forms.ValidationError(
+                    (
+                        "Le fichier PDF ne contient "
+                        "aucune page exploitable."
+                    )
+                )
+
+        except PdfReadError as exc:
+            raise forms.ValidationError(
+                (
+                    "Le fichier envoyé n'est pas "
+                    "un document PDF valide."
+                )
+            ) from exc
+
+        except (EOFError, ValueError) as exc:
+            raise forms.ValidationError(
+                (
+                    "Le fichier PDF est endommagé "
+                    "ou illisible."
+                )
+            ) from exc
+
+        finally:
+            uploaded_file.seek(0)
+
+    def _validate_image(
+        self,
+        uploaded_file,
+        extension,
+    ):
+        """
+        Vérifie qu'un fichier JPG, JPEG ou PNG
+        contient réellement une image valide.
+        """
+        expected_formats = {
+            ".jpg": "JPEG",
+            ".jpeg": "JPEG",
+            ".png": "PNG",
+        }
+
+        expected_format = expected_formats[extension]
+
+        try:
+            uploaded_file.seek(0)
+
+            with Image.open(uploaded_file) as image:
+                detected_format = image.format
+                image.verify()
+
+            if detected_format != expected_format:
+                raise forms.ValidationError(
+                    (
+                        "Le contenu du fichier ne correspond "
+                        "pas à son extension."
+                    )
+                )
+
+        except (
+            UnidentifiedImageError,
+            OSError,
+            SyntaxError,
+            ValueError,
+        ) as exc:
+            raise forms.ValidationError(
+                (
+                    "Le fichier envoyé n'est pas "
+                    "une image JPG ou PNG valide."
+                )
+            ) from exc
+
+        finally:
+            uploaded_file.seek(0)
+
+
+"""
+Formulaire permettant au client d'envoyer
+un message à un conseiller.
+"""
+
+
 class DossierAdvisorMessageForm(forms.ModelForm):
     class Meta:
         model = DossierAdvisorMessage
-        fields = ["subject", "message"]
+        fields = [
+            "subject",
+            "message",
+        ]
+
         labels = {
             "subject": "Sujet",
             "message": "Votre message",
         }
+
         widgets = {
             "subject": forms.TextInput(
                 attrs={
                     "class": "form-control",
-                    "placeholder": "Question concernant mon dossier",
+                    "placeholder": (
+                        "Question concernant mon dossier"
+                    ),
                 }
             ),
             "message": forms.Textarea(
                 attrs={
                     "class": "form-control",
                     "rows": 5,
-                    "placeholder": "Expliquez votre demande à un conseiller M-Motors...",
+                    "placeholder": (
+                        "Expliquez votre demande à un "
+                        "conseiller M-Motors..."
+                    ),
                 }
             ),
         }

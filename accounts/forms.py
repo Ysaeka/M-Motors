@@ -45,6 +45,20 @@ class ClientSignUpForm(UserCreationForm):
             }
         )
 
+    def clean_email(self):
+        """
+        Vérifie qu'aucun compte n'utilise déjà cette adresse email.
+        La comparaison ne tient pas compte des majuscules/minuscules.
+        """
+        email = self.cleaned_data["email"].strip().lower()
+
+        if User.objects.filter(email__iexact=email).exists():
+            raise forms.ValidationError(
+                "Un compte utilise déjà cette adresse email."
+            )
+
+        return email
+
 
 class ClientProfileForm(forms.Form):
     first_name = forms.CharField(
@@ -113,6 +127,26 @@ class ClientProfileForm(forms.Form):
             self.fields["email"].initial = user.email
             self.fields["phone"].initial = profile.phone
             self.fields["address"].initial = profile.address
+
+    def clean_email(self):
+        """
+        Vérifie que l'adresse email n'est pas déjà utilisée
+        par un autre utilisateur.
+        """
+        email = self.cleaned_data["email"].strip().lower()
+
+        users_with_email = User.objects.filter(email__iexact=email)
+
+        # L'utilisateur peut conserver sa propre adresse email.
+        if self.user:
+            users_with_email = users_with_email.exclude(pk=self.user.pk)
+
+        if users_with_email.exists():
+            raise forms.ValidationError(
+                "Un compte utilise déjà cette adresse email."
+            )
+
+        return email
 
     def save(self):
         self.user.first_name = self.cleaned_data["first_name"]

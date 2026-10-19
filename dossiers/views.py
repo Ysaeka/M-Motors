@@ -1,24 +1,32 @@
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import get_object_or_404, redirect, render
-from django.utils import timezone
-from django.http import FileResponse
-
-from accounts.models import ClientProfile
-
-from .forms import DocumentUploadForm, DossierCompletionForm, DossierAdvisorMessageForm
-
-from catalog.models import Vehicle
-
 from decimal import Decimal
 
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.db import transaction
+from django.http import FileResponse
+from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
+from django.views.decorators.http import require_POST
+
+from accounts.models import ClientProfile
+from catalog.models import Vehicle
+
+from .forms import (
+    DocumentUploadForm,
+    DossierAdvisorMessageForm,
+    DossierCompletionForm,
+)
 from .models import Document, Dossier, DossierStatusHistory, Option
 
-# Statuts considérés comme actifs pour éviter de créer plusieurs dossiers en cours pour le même client, le même véhicule et le même type de demande.
+
+# Statuts considérés comme actifs pour éviter de créer plusieurs dossiers
+# en cours pour le même client, le même véhicule et le même type de demande.
 ACTIVE_DOSSIER_STATUSES = [
     Dossier.Status.DRAFT,
     Dossier.Status.SUBMITTED,
     Dossier.Status.UNDER_REVIEW,
 ]
+
 
 # Les justificatifs attendus dépendent du type de demande.
 # Une LLD nécessite plus de pièces qu'une demande d'achat classique.
@@ -38,7 +46,93 @@ REQUIRED_DOCUMENTS_BY_APPLICATION_TYPE = {
     ],
 }
 
+
+def can_replace_rejected_document(dossier, document_type):
+    """
+    Vérifie si le client peut remplacer un document refusé.
+
+    Après soumission, le dossier n'est plus librement modifiable.
+    La seule exception concerne un document explicitement refusé
+    par le back-office pendant l'étude du dossier.
+    """
+    if dossier.status not in [
+        Dossier.Status.SUBMITTED,
+        Dossier.Status.UNDER_REVIEW,
+    ]:
+        return False
+
+    return dossier.documents.filter(
+        document_type=document_type,
+        validation_status=Document.ValidationStatus.REJECTED,
+    ).exists()
+
+
+def submit_dossier_and_reserve_vehicle(dossier, changed_by, comment):
+    """
+    Soumet un dossier et réserve son véhicule dans une transaction.
+
+    Le véhicule est verrouillé pendant l'opération afin d'éviter que
+    deux dossiers différents puissent réserver le même véhicule
+    simultanément.
+
+    Retourne le dossier soumis si l'opération réussit.
+    Retourne None si le dossier n'est plus en brouillon ou si le
+    véhicule n'est plus disponible.
+    """
+    with transaction.atomic():
+        locked_dossier = (
+            Dossier.objects.select_for_update()
+            .select_related("vehicle")
+            .get(pk=dossier.pk)
+        )
+
+        if locked_dossier.status != Dossier.Status.DRAFT:
+            return None
+
+        vehicle = Vehicle.objects.select_for_update().get(
+            pk=locked_dossier.vehicle_id
+        )
+
+        if vehicle.availability_status != Vehicle.AvailabilityStatus.AVAILABLE:
+            return None
+
+        old_status = locked_dossier.status
+        submitted_at = timezone.now()
+
+        # La soumission du dossier réserve immédiatement le véhicule.
+        vehicle.availability_status = Vehicle.AvailabilityStatus.RESERVED
+        vehicle.save(
+            update_fields=[
+                "availability_status",
+                "updated_at",
+            ]
+        )
+
+        locked_dossier.status = Dossier.Status.SUBMITTED
+        locked_dossier.submitted_at = submitted_at
+
+        locked_dossier.save(
+            update_fields=[
+                "status",
+                "submitted_at",
+                "updated_at",
+            ]
+        )
+
+        DossierStatusHistory.objects.create(
+            dossier=locked_dossier,
+            old_status=old_status,
+            new_status=locked_dossier.status,
+            changed_by=changed_by,
+            comment=comment,
+        )
+
+        return locked_dossier
+
+
 """Affiche la liste des dossiers appartenant au client connecté."""
+
+
 @login_required
 def dossier_list(request):
     dossiers = (
@@ -55,7 +149,10 @@ def dossier_list(request):
         },
     )
 
+
 """Affiche le détail d'un dossier client et permet l'échange avec un conseiller."""
+
+
 @login_required
 def dossier_detail(request, pk):
     dossier = get_object_or_404(
@@ -73,12 +170,15 @@ def dossier_detail(request, pk):
     vehicle_monthly_price = dossier.vehicle.price_monthly or Decimal("0")
     estimated_location_total = Decimal("0")
     purchase_option_estimate = None
+
     advisor_message_form = DossierAdvisorMessageForm(
         initial={
             "subject": f"Question concernant mon dossier #{dossier.id}",
         }
     )
 
+    # L'envoi d'un message au conseiller reste possible
+    # quel que soit le statut du dossier.
     if request.method == "POST" and "advisor_message_submit" in request.POST:
         advisor_message_form = DossierAdvisorMessageForm(request.POST)
 
@@ -92,13 +192,21 @@ def dossier_detail(request, pk):
 
     # Les options affichées pour la LLD sont incluses dans l'offre.
     # Elles servent à informer le client, sans recalcul tarifaire supplémentaire.
-
     if dossier.application_type == Dossier.ApplicationType.LLD:
-        lld_included_options = Option.objects.filter(is_active=True).order_by("name")
+        lld_included_options = Option.objects.filter(
+            is_active=True
+        ).order_by("name")
 
         if request.method == "POST" and "lld_duration_months" in request.POST:
+            # La durée LLD ne peut être modifiée
+            # que tant que le dossier est en brouillon.
+            if dossier.status != Dossier.Status.DRAFT:
+                return redirect("dossier_detail", pk=dossier.pk)
+
             lld_duration_months = request.POST.get("lld_duration_months")
-            valid_durations = [choice[0] for choice in Dossier.LLDDuration.choices]
+            valid_durations = [
+                choice[0] for choice in Dossier.LLDDuration.choices
+            ]
 
             if lld_duration_months:
                 lld_duration_months = int(lld_duration_months)
@@ -110,10 +218,14 @@ def dossier_detail(request, pk):
             return redirect("dossier_detail", pk=dossier.pk)
 
         if dossier.lld_duration_months:
-            estimated_location_total = vehicle_monthly_price * dossier.lld_duration_months
+            estimated_location_total = (
+                vehicle_monthly_price * dossier.lld_duration_months
+            )
 
             if dossier.vehicle.price_sale:
-                purchase_option_estimate = dossier.vehicle.price_sale - estimated_location_total
+                purchase_option_estimate = (
+                    dossier.vehicle.price_sale - estimated_location_total
+                )
 
                 if purchase_option_estimate < 0:
                     purchase_option_estimate = Decimal("0")
@@ -132,8 +244,12 @@ def dossier_detail(request, pk):
         },
     )
 
+
 """Démarre une demande d'achat ou de LLD pour un véhicule donné."""
+
+
 @login_required
+@require_POST
 def start_dossier(request, vehicle_pk, application_type):
     vehicle = get_object_or_404(Vehicle, pk=vehicle_pk)
 
@@ -143,19 +259,28 @@ def start_dossier(request, vehicle_pk, application_type):
     ]:
         return redirect("vehicle_detail", pk=vehicle.pk)
 
-    if application_type == Dossier.ApplicationType.SALE and vehicle.offer_type not in [
-        Vehicle.OfferType.SALE,
-        Vehicle.OfferType.BOTH,
-    ]:
+    if (
+        application_type == Dossier.ApplicationType.SALE
+        and vehicle.offer_type
+        not in [
+            Vehicle.OfferType.SALE,
+            Vehicle.OfferType.BOTH,
+        ]
+    ):
         return redirect("vehicle_detail", pk=vehicle.pk)
 
-    if application_type == Dossier.ApplicationType.LLD and vehicle.offer_type not in [
-        Vehicle.OfferType.LLD,
-        Vehicle.OfferType.BOTH,
-    ]:
+    if (
+        application_type == Dossier.ApplicationType.LLD
+        and vehicle.offer_type
+        not in [
+            Vehicle.OfferType.LLD,
+            Vehicle.OfferType.BOTH,
+        ]
+    ):
         return redirect("vehicle_detail", pk=vehicle.pk)
 
-    # Si un dossier actif existe déjà pour ce véhicule et ce type de demande,on le réutilise pour éviter les doublons côté client.
+    # Si le client possède déjà un dossier actif pour ce véhicule
+    # et ce type de demande, on le redirige vers ce dossier.
     dossier = (
         Dossier.objects.filter(
             customer=request.user,
@@ -167,31 +292,46 @@ def start_dossier(request, vehicle_pk, application_type):
         .first()
     )
 
-    if dossier is None:
-        dossier = Dossier.objects.create(
-            customer=request.user,
-            vehicle=vehicle,
-            application_type=application_type,
-            status=Dossier.Status.DRAFT,
-        )
+    if dossier is not None:
+        return redirect("dossier_detail", pk=dossier.pk)
 
-        DossierStatusHistory.objects.create(
-            dossier=dossier,
-            old_status=Dossier.Status.DRAFT,
-            new_status=Dossier.Status.DRAFT,
-            changed_by=request.user,
-            comment="Création de la demande",
+    # Aucun nouveau dossier ne peut être créé pour un véhicule
+    # déjà réservé, vendu, loué ou rendu indisponible.
+    if vehicle.availability_status != Vehicle.AvailabilityStatus.AVAILABLE:
+        messages.error(
+            request,
+            "Ce véhicule n'est plus disponible pour une nouvelle demande.",
         )
+        return redirect("vehicle_detail", pk=vehicle.pk)
+
+    dossier = Dossier.objects.create(
+        customer=request.user,
+        vehicle=vehicle,
+        application_type=application_type,
+        status=Dossier.Status.DRAFT,
+    )
+
+    DossierStatusHistory.objects.create(
+        dossier=dossier,
+        old_status=Dossier.Status.DRAFT,
+        new_status=Dossier.Status.DRAFT,
+        changed_by=request.user,
+        comment="Création de la demande",
+    )
 
     return redirect("dossier_detail", pk=dossier.pk)
 
+
 """Permet au client de compléter ses informations et déposer ses justificatifs."""
+
+
 @login_required
 def complete_dossier(request, pk):
     dossier = get_object_or_404(
-        Dossier.objects.select_related("vehicle", "customer").prefetch_related(
-            "documents"
-        ),
+        Dossier.objects.select_related(
+            "vehicle",
+            "customer",
+        ).prefetch_related("documents"),
         pk=pk,
         customer=request.user,
     )
@@ -204,22 +344,30 @@ def complete_dossier(request, pk):
     )
 
     uploaded_document_types = set(
-        dossier.documents.values_list("document_type", flat=True)
+        dossier.documents.values_list(
+            "document_type",
+            flat=True,
+        )
     )
 
     required_documents_count = len(required_document_types)
+
     uploaded_documents_count = len(
         uploaded_document_types.intersection(required_document_types)
     )
 
-    # La barre de progression du dossier est calculée à partir des documents obligatoires.
-    # Exemple : pour une LLD avec 6 documents attendus, 3 documents déposés donnent 50 %.
-    # Seuls les types de documents réellement attendus pour le dossier sont pris en compte.
+    # La barre de progression du dossier est calculée
+    # à partir des documents obligatoires.
+    #
+    # Exemple : pour une LLD avec 6 documents attendus,
+    # 3 documents déposés donnent 50 %.
     completion_percentage = 0
 
     if required_documents_count:
         completion_percentage = round(
-            uploaded_documents_count / required_documents_count * 100
+            uploaded_documents_count
+            / required_documents_count
+            * 100
         )
 
     is_dossier_complete = (
@@ -227,15 +375,26 @@ def complete_dossier(request, pk):
         and uploaded_documents_count == required_documents_count
     )
 
+    # Les informations générales sont modifiables
+    # uniquement tant que le dossier est en brouillon.
+    can_edit_dossier = dossier.status == Dossier.Status.DRAFT
+
     vehicle_monthly_price = dossier.vehicle.price_monthly or Decimal("0")
     estimated_location_total = Decimal("0")
     purchase_option_estimate = None
 
-    if dossier.application_type == Dossier.ApplicationType.LLD and dossier.lld_duration_months:
-        estimated_location_total = vehicle_monthly_price * dossier.lld_duration_months
+    if (
+        dossier.application_type == Dossier.ApplicationType.LLD
+        and dossier.lld_duration_months
+    ):
+        estimated_location_total = (
+            vehicle_monthly_price * dossier.lld_duration_months
+        )
 
         if dossier.vehicle.price_sale:
-            purchase_option_estimate = dossier.vehicle.price_sale - estimated_location_total
+            purchase_option_estimate = (
+                dossier.vehicle.price_sale - estimated_location_total
+            )
 
             if purchase_option_estimate < 0:
                 purchase_option_estimate = Decimal("0")
@@ -246,12 +405,21 @@ def complete_dossier(request, pk):
         action = request.POST.get("action")
 
         if action == "save_information":
-            form = DossierCompletionForm(request.POST, instance=dossier)
+            # Après soumission, les données du dossier
+            # ne peuvent plus être modifiées par le client.
+            if not can_edit_dossier:
+                return redirect("dossier_detail", pk=dossier.pk)
+
+            form = DossierCompletionForm(
+                request.POST,
+                instance=dossier,
+            )
 
             if form.is_valid():
                 dossier = form.save(commit=False)
 
-                # La date de consentement est enregistrée uniquement au premier accord.
+                # La date de consentement est enregistrée
+                # uniquement au premier accord.
                 if (
                     dossier.data_processing_consent
                     and not dossier.data_processing_consent_at
@@ -260,12 +428,43 @@ def complete_dossier(request, pk):
 
                 dossier.save()
 
-                return redirect("complete_dossier", pk=dossier.pk)
+                return redirect(
+                    "complete_dossier",
+                    pk=dossier.pk,
+                )
 
         elif action == "upload_document":
             form = DossierCompletionForm(instance=dossier)
+
             document_type = request.POST.get("document_type")
             uploaded_file = request.FILES.get("file")
+
+            existing_document = dossier.documents.filter(
+                document_type=document_type
+            ).first()
+
+            # En brouillon, le client peut déposer ou remplacer
+            # les justificatifs nécessaires.
+            #
+            # Après soumission, il ne peut remplacer
+            # qu'un document explicitement refusé.
+            can_upload_document = can_edit_dossier
+
+            replacing_rejected_document = (
+                existing_document is not None
+                and existing_document.validation_status
+                == Document.ValidationStatus.REJECTED
+                and can_replace_rejected_document(
+                    dossier,
+                    document_type,
+                )
+            )
+
+            if replacing_rejected_document:
+                can_upload_document = True
+
+            if not can_upload_document:
+                return redirect("dossier_detail", pk=dossier.pk)
 
             upload_form = DocumentUploadForm(
                 {
@@ -275,46 +474,108 @@ def complete_dossier(request, pk):
                     "file": uploaded_file,
                 },
                 allowed_document_types=[
-                    (doc_type, doc_type) for doc_type in required_document_types
+                    (doc_type, doc_type)
+                    for doc_type in required_document_types
                 ],
             )
 
-            # Un document déjà présent est remplacé par la nouvelle version.
-            # Son statut repasse en attente de validation back-office.
             if upload_form.is_valid():
                 Document.objects.update_or_create(
                     dossier=dossier,
-                    document_type=upload_form.cleaned_data["document_type"],
+                    document_type=upload_form.cleaned_data[
+                        "document_type"
+                    ],
                     defaults={
                         "file": upload_form.cleaned_data["file"],
-                        "validation_status": Document.ValidationStatus.PENDING,
+                        "validation_status": (
+                            Document.ValidationStatus.PENDING
+                        ),
+                        "rejection_reason": "",
+                        "validated_at": None,
                     },
                 )
 
-                return redirect("complete_dossier", pk=dossier.pk)
+                # Lorsqu'un document refusé est remplacé,
+                # le dossier repasse en instruction
+                # et l'événement est enregistré dans l'historique.
+                if replacing_rejected_document:
+                    old_status = dossier.status
 
-            document_upload_errors[document_type] = upload_form.errors
+                    dossier.status = Dossier.Status.UNDER_REVIEW
+                    dossier.reviewed_at = None
+
+                    dossier.save(
+                        update_fields=[
+                            "status",
+                            "reviewed_at",
+                            "updated_at",
+                        ]
+                    )
+
+                    document_label = dict(
+                        Document.DocumentType.choices
+                    ).get(
+                        document_type,
+                        document_type,
+                    )
+
+                    DossierStatusHistory.objects.create(
+                        dossier=dossier,
+                        old_status=old_status,
+                        new_status=Dossier.Status.UNDER_REVIEW,
+                        changed_by=request.user,
+                        comment=(
+                            "Remplacement par le client "
+                            f"du document refusé : {document_label}"
+                        ),
+                    )
+
+                return redirect(
+                    "complete_dossier",
+                    pk=dossier.pk,
+                )
+
+            document_upload_errors[document_type] = (
+                upload_form.errors
+            )
 
         elif action == "submit_dossier":
             form = DossierCompletionForm(instance=dossier)
 
-            if is_dossier_complete and dossier.status == Dossier.Status.DRAFT:
-                old_status = dossier.status
-                dossier.status = Dossier.Status.SUBMITTED
-                dossier.submitted_at = timezone.now()
-                dossier.save(update_fields=["status", "submitted_at", "updated_at"])
-
-                DossierStatusHistory.objects.create(
+            if (
+                is_dossier_complete
+                and dossier.status == Dossier.Status.DRAFT
+            ):
+                submitted_dossier = submit_dossier_and_reserve_vehicle(
                     dossier=dossier,
-                    old_status=old_status,
-                    new_status=dossier.status,
                     changed_by=request.user,
-                    comment="Dossier soumis par le client après dépôt des documents",
+                    comment=(
+                        "Dossier soumis par le client "
+                        "après dépôt des documents"
+                    ),
                 )
 
-                return redirect("dossier_detail", pk=dossier.pk)
+                if submitted_dossier is None:
+                    messages.error(
+                        request,
+                        (
+                            "Ce véhicule n'est plus disponible. "
+                            "Votre dossier n'a pas été soumis."
+                        ),
+                    )
+                    return redirect(
+                        "vehicle_detail",
+                        pk=dossier.vehicle_id,
+                    )
+
+                return redirect(
+                    "dossier_detail",
+                    pk=submitted_dossier.pk,
+                )
+
         else:
             form = DossierCompletionForm(instance=dossier)
+
     else:
         form = DossierCompletionForm(instance=dossier)
 
@@ -329,14 +590,19 @@ def complete_dossier(request, pk):
             "completion_percentage": completion_percentage,
             "document_upload_errors": document_upload_errors,
             "is_dossier_complete": is_dossier_complete,
+            "can_edit_dossier": can_edit_dossier,
             "vehicle_monthly_price": vehicle_monthly_price,
             "estimated_location_total": estimated_location_total,
             "purchase_option_estimate": purchase_option_estimate,
         },
     )
 
+
 """Soumet directement un dossier brouillon et historise le changement de statut."""
+
+
 @login_required
+@require_POST
 def submit_dossier(request, pk):
     dossier = get_object_or_404(
         Dossier,
@@ -345,24 +611,36 @@ def submit_dossier(request, pk):
         status=Dossier.Status.DRAFT,
     )
 
-    old_status = dossier.status
-    dossier.status = Dossier.Status.SUBMITTED
-    dossier.submitted_at = timezone.now()
-    dossier.save(update_fields=["status", "submitted_at", "updated_at"])
-
-    DossierStatusHistory.objects.create(
+    submitted_dossier = submit_dossier_and_reserve_vehicle(
         dossier=dossier,
-        old_status=old_status,
-        new_status=dossier.status,
         changed_by=request.user,
         comment="Demande confirmée par le client",
     )
 
-    return redirect("dossier_detail", pk=dossier.pk)
+    if submitted_dossier is None:
+        messages.error(
+            request,
+            (
+                "Ce véhicule n'est plus disponible. "
+                "Votre dossier n'a pas été soumis."
+            ),
+        )
+        return redirect(
+            "vehicle_detail",
+            pk=dossier.vehicle_id,
+        )
+
+    return redirect(
+        "dossier_detail",
+        pk=submitted_dossier.pk,
+    )
 
 
 """Supprime un dossier uniquement s'il appartient au client et reste en brouillon."""
+
+
 @login_required
+@require_POST
 def delete_dossier(request, pk):
     dossier = get_object_or_404(
         Dossier,
@@ -375,11 +653,17 @@ def delete_dossier(request, pk):
 
     return redirect("accounts:espace_client")
 
+
 """Retourne un document uniquement si le client connecté en est propriétaire."""
+
+
 @login_required
 def document_download(request, pk):
     document = get_object_or_404(
-        Document.objects.select_related("dossier", "dossier__customer"),
+        Document.objects.select_related(
+            "dossier",
+            "dossier__customer",
+        ),
         pk=pk,
         dossier__customer=request.user,
     )
