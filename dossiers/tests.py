@@ -1033,3 +1033,74 @@ class DossierRequestTests(TestCase):
                 vehicle=self.vehicle,
             ).exists()
         )
+
+    def test_submit_is_refused_if_vehicle_already_reserved(self):
+        """
+        Un dossier ne peut pas être soumis
+        si le véhicule est déjà resrvé.
+        """
+
+        User = get_user_model()
+
+        second_user = User.objects.create_user(
+            username="reservedclient",
+            email="reservedclient@example.com",
+            password="Testpass123!",
+        )
+
+        self.vehicle.availability_status = (
+            Vehicle.AvailabilityStatus.RESERVED
+        )
+
+        self.vehicle.save(
+            update_fields=[
+                "availability_status",
+                "updated_at",
+            ]
+        )
+
+        dossier = Dossier.objects.create(
+            customer=second_user,
+            vehicle=self.vehicle,
+            application_type=Dossier.ApplicationType.SALE,
+            status=Dossier.Status.DRAFT,
+        )
+
+        self.client.login(
+            username="reservedclient",
+            password="Testpass123!",
+        )
+
+        response = self.client.post(
+            reverse(
+                "submit_dossier",
+                args=[dossier.pk]
+            )
+        )
+
+        dossier.refresh_from_db()
+        self.vehicle.refresh_from_db()
+
+        self.assertRedirects(
+            response,
+            reverse(
+                "vehicle_detail",
+                args=[self.vehicle.pk]
+            ),
+        )
+
+        self.assertEqual(
+            dossier.status,
+            Dossier.Status.DRAFT,
+        )
+
+        self.assertIsNone(
+            dossier.submitted_at,
+        )
+
+        self.assertEqual(
+            self.vehicle.availability_status,
+            Vehicle.AvailabilityStatus.RESERVED,
+        )
+
+
